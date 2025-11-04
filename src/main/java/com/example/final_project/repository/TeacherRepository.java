@@ -20,8 +20,7 @@ import java.util.Optional;
 
     @Query("SELECT t FROM Teacher t WHERE " +
             "LOWER(t.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(t.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(t.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+            "LOWER(t.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Teacher> searchTeachers(@Param("keyword") String keyword, Pageable pageable);
 
 }
