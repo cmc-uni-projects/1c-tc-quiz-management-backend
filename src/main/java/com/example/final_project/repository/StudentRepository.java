@@ -20,7 +20,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     @Query("SELECT t FROM Student t WHERE " +
             "LOWER(t.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(t.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(t.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+            "LOWER(t.email) LIKE LOWER(CONCAT('%', :keyword, '%'))" )
     Page<Student> searchStudents(@Param("keyword") String keyword, Pageable pageable);
 }
