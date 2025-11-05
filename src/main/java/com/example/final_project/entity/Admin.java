@@ -26,6 +26,8 @@ public class Admin {
 
     private String email;
 
+    private String avatar;
+
     @Enumerated(EnumType.STRING)
     private RoleName roleName = RoleName.ADMIN;
 }

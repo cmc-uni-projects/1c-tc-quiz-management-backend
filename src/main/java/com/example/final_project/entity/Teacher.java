@@ -37,6 +37,8 @@ public class Teacher {
     @Email(message = "Email không hợp lệ")
     private String email;
 
+    private String avatar;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
