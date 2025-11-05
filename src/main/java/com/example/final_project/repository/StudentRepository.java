@@ -14,7 +14,6 @@ import java.util.Optional;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByUsername(String username);
-    Page<Student> findByUsername(String username, Pageable pageable);
     Optional<Student> findByEmail(String email);
     Page<Student> findByEmail(String email, Pageable pageable);
 
