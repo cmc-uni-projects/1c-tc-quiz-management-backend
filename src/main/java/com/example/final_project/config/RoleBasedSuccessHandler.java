@@ -16,18 +16,19 @@ public class RoleBasedSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        String redirectUrl = "/"; // Mặc định chuyển về trang chủ
+        String frontendBase = "http://localhost:3000";
+        String redirectUrl = frontendBase + "/"; // Mặc định chuyển về trang chủ
 
         for (GrantedAuthority authority : authentication.getAuthorities()) {
             String role = authority.getAuthority();
             if (role.equals("ROLE_ADMIN")) {
-                redirectUrl = "/admin/dashboard";
+                redirectUrl = frontendBase + "/admin";
                 break;
             } else if (role.equals("ROLE_TEACHER")) {
-                redirectUrl = "/teacher/dashboard";
+                redirectUrl = frontendBase + "/teacher/teacherhome";
                 break;
             } else if (role.equals("ROLE_STUDENT")) {
-                redirectUrl = "/student/dashboard";
+                redirectUrl = frontendBase + "/student/studenthome";
                 break;
             }
         }

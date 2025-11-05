@@ -29,34 +29,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .userDetailsService(userDetailsService)
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-
                 // Cấu hình Authorization
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/", "/css/**", "/js/**").permitAll() // Cho phép truy cập công khai
-
                         .requestMatchers("/admin/**").hasRole("ADMIN")                 // Chỉ ADMIN truy cập khu vực /admin
-
-                        .requestMatchers("/teacher/**").hasAnyRole("ADMIN", "GIẢNG_VIÊN") // ADMIN và GIẢNG_VIÊN truy cập /teacher
-
-                        .requestMatchers("/student/**").hasRole("HỌC_VIÊN")            // Chỉ HỌC_VIÊN truy cập khu vực /student
-
+                        .requestMatchers("/teacher/**").hasAnyRole("ADMIN", "TEACHER") // ADMIN và TEACHER truy cập /teacher
+                        .requestMatchers("/student/**").hasRole("STUDENT")            // Chỉ STUDENT truy cập khu vực /student
                         .anyRequest().authenticated()
                 )
-
-                .formLogin(form -> form
-                        .loginPage("/login")
+.formLogin(form -> form
+                        .loginPage("http://localhost:3000/login")
+                        .loginProcessingUrl("/perform_login")
                         .successHandler(customAuthenticationSuccessHandler())
-                        .failureHandler(new SimpleUrlAuthenticationFailureHandler("/login?error"))
+                        .failureUrl("http://localhost:3000/login?error")
                         .permitAll()
                 )
-
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                )
-
                 // Cấu hình Logout
                 .logout(logout -> logout
                         .logoutUrl("/logout")
