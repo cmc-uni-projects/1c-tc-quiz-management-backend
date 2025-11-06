@@ -27,27 +27,25 @@ public class CustomUserDetailsService implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        // Try Admin by username only
-        return adminRepository.findByUsername(usernameOrEmail)
-                .map(admin -> buildUserDetails(admin.getUsername(), admin.getPassword(), admin.getRoleName()))
+        // Try Admin by email
+        return adminRepository.findByEmail(email)
+                .map(admin -> buildUserDetails(admin.getEmail(), admin.getPassword(), admin.getRoleName()))
                 .orElseGet(() ->
-                        // Try Teacher by username or email
-                        teacherRepository.findByUsername(usernameOrEmail)
-                                .or(() -> teacherRepository.findByEmail(usernameOrEmail))
-                                .map(teacher -> buildUserDetails(teacher.getUsername(), teacher.getPassword(), teacher.getRoleName()))
+                        // Try Teacher by email
+                        teacherRepository.findByEmail(email)
+                                .map(teacher -> buildUserDetails(teacher.getEmail(), teacher.getPassword(), teacher.getRoleName()))
                                 .orElseGet(() ->
-                                        // Try Student by username or email
-                                        studentRepository.findByUsername(usernameOrEmail)
-                                                .or(() -> studentRepository.findByEmail(usernameOrEmail))
-                                                .map(student -> buildUserDetails(student.getUsername(), student.getPassword(), student.getRoleName()))
-                                                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + usernameOrEmail))
+                                        // Try Student by email
+                                        studentRepository.findByEmail(email)
+                                                .map(student -> buildUserDetails(student.getEmail(), student.getPassword(), student.getRoleName()))
+                                                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + email))
                                 )
                 );
     }
 
-    private UserDetails buildUserDetails(String username, String hashedPassword, RoleName role) {
+    private UserDetails buildUserDetails(String email, String hashedPassword, RoleName role) {
         String roleWithPrefix = "ROLE_" + role.name();
 
         Set<GrantedAuthority> authorities = Collections.singleton(
@@ -55,7 +53,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         );
 
         return new org.springframework.security.core.userdetails.User(
-                username,
+                email,
                 hashedPassword,
                 authorities
         );

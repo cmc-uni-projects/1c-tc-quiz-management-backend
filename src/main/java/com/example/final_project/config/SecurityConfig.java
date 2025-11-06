@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("http://localhost:3000/login")
                         .loginProcessingUrl("/perform_login")
+                        .usernameParameter("email")
                         .successHandler(customAuthenticationSuccessHandler())
                         .failureUrl("http://localhost:3000/login?error")
                         .permitAll()
