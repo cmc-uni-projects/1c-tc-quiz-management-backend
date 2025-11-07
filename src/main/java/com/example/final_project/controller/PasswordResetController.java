@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,33 +19,89 @@ public class PasswordResetController {
     private PasswordResetService passwordResetService;
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
-            passwordResetService.createPasswordResetOtpForUser(email);
-            return ResponseEntity.ok("OTP for password reset has been sent to your email.");
+            if (email == null || email.trim().isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Email is required");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            String otp = passwordResetService.createPasswordResetOtpForUser(email);
+            
+            // Return OTP in response for development testing
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "OTP for password reset has been sent to your email.");
+            response.put("otp", otp); // For development/testing
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 
     @PostMapping("/validate-token")
-    public ResponseEntity<String> validateToken(@RequestParam String token) {
+    public ResponseEntity<?> validateToken(@RequestBody Map<String, String> request) {
         try {
+            String token = request.get("token");
+            if (token == null || token.trim().isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Token is required");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
             passwordResetService.validateToken(token);
-            return ResponseEntity.ok("Token is valid.");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Token is valid.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
         try {
+            if (passwordResetDto.getToken() == null || passwordResetDto.getToken().trim().isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Token is required");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            if (passwordResetDto.getNewPassword() == null || passwordResetDto.getNewPassword().trim().isEmpty()) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "New password is required");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
             passwordResetService.resetPassword(passwordResetDto);
-            return ResponseEntity.ok("Password has been reset successfully.");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Password has been reset successfully.");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An error occurred: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 }
