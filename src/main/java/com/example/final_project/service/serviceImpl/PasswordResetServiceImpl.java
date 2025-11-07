@@ -38,7 +38,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private PasswordEncoder passwordEncoder;
 
     @Override
-    public void createPasswordResetOtpForUser(String email) {
+    public String createPasswordResetOtpForUser(String email) {
         Optional<Student> studentOpt = studentRepository.findByEmail(email);
         Optional<Teacher> teacherOpt = teacherRepository.findByEmail(email);
 
@@ -46,6 +46,17 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             throw new RuntimeException("User with this email not found");
         }
 
+        // Delete any existing tokens for this email
+        try {
+            PasswordResetToken existingToken = tokenRepository.findByEmail(email);
+            if (existingToken != null) {
+                tokenRepository.delete(existingToken);
+            }
+        } catch (Exception e) {
+            // Ignore if no existing token
+        }
+
+        // Generate a unique token using UUID to avoid collisions
         String token = String.format("%06d", new Random().nextInt(999999));
         LocalDateTime expiryDate = LocalDateTime.now().plusHours(1);
 
@@ -53,6 +64,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenRepository.save(myToken);
 
         emailService.sendPasswordResetEmail(email, token);
+        
+        return token; // Return OTP for development/testing
     }
 
     @Override

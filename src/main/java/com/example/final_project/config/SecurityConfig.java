@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 // Cấu hình Authorization
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/", "/css/**", "/js/**", "/register", "/perform_login").permitAll() // Cho phép truy cập công khai
+                        .requestMatchers("/login", "/", "/css/**", "/js/**", "/register", "/perform_login", "/forgot-password", "/validate-token", "/reset-password").permitAll() // Cho phép truy cập công khai
                         .requestMatchers("/admin/**").hasRole("ADMIN")                 // Chỉ ADMIN truy cập khu vực /admin
                         .requestMatchers("/teacher/**").hasAnyRole("ADMIN", "TEACHER") // ADMIN và TEACHER truy cập /teacher
                         .requestMatchers("/student/**").hasRole("STUDENT")            // Chỉ STUDENT truy cập khu vực /student
