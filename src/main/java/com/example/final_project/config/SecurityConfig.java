@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/test").permitAll()
                 .requestMatchers("/api/register/**", "/api/forgot-password", "/api/reset-password", "/api/validate-token").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/api/change-password").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/student/**").hasRole("STUDENT")
                 .requestMatchers("/teacher/**").hasRole("TEACHER")
@@ -53,6 +54,13 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/api/perform_logout")
                 .logoutSuccessHandler(logoutSuccessHandler())
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"Unauthorized. Please log in.\"}");
+                })
             );
 
         return http.build();
