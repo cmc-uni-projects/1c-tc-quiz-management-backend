@@ -13,12 +13,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class TeacherServiceImpl implements TeacherService {
     @Autowired
     private TeacherRepository teacherRepository;
@@ -78,7 +80,26 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     public List<Teacher> getPendingTeachers() {
-        return teacherRepository.findByStatus(Teacher.TeacherStatus.PENDING);
+        try {
+            log.info("Bắt đầu lấy danh sách giáo viên chờ duyệt...");
+            log.info("Giá trị PENDING enum: {}", Teacher.TeacherStatus.PENDING);
+            
+            List<Teacher> result = teacherRepository.findByStatus(Teacher.TeacherStatus.PENDING);
+            log.info("Tìm thấy {} giáo viên đang chờ duyệt", result.size());
+            
+            if (!result.isEmpty()) {
+                log.info("Giáo viên đầu tiên trong danh sách - ID: {}, Tên: {}, Status: {}", 
+                        result.get(0).getTeacherId(), 
+                        result.get(0).getUsername(),
+                        result.get(0).getStatus());
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("LỖI KHI LẤY DANH SÁCH GIÁO VIÊN CHỜ DUYỆT", e);
+            log.error("Chi tiết lỗi: {}", e.getMessage(), e);
+            throw new RuntimeException("Không thể lấy danh sách giáo viên chờ duyệt: " + e.getMessage(), e);
+        }
     }
 
     @Override
