@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Locked;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -65,7 +66,8 @@ public class Teacher {
     public enum TeacherStatus {
         PENDING("Đang chờ xác nhận"),
         APPROVED("Xác nhận"),
-        REJECTED("Bị từ chối");
+        REJECTED("Bị từ chối"),
+        LOCKED("Tạm khóa");
 
         private final String displayName;
 
