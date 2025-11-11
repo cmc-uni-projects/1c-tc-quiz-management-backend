@@ -28,9 +28,22 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private com.example.final_project.repository.AdminRepository adminRepository;
+
+    @Autowired
+    private com.example.final_project.repository.TeacherRepository teacherRepository;
+
     // TODO: Uncomment and implement QuestionRepository when Question entity is available
     // @Autowired
     // private QuestionRepository questionRepository;
+
+    private String resolveRole(String email) {
+        if (email == null || email.isBlank()) return null;
+        if (adminRepository.findByEmail(email).isPresent()) return "admin";
+        if (teacherRepository.findByEmail(email).isPresent()) return "teacher";
+        return null;
+    }
 
     @Override
     public Page<Category> findAll(CategorySearchRequest request) {
@@ -45,22 +58,29 @@ public class CategoryServiceImpl implements CategoryService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        return categoryRepository.findAll(spec, pageable);
+        return categoryRepository.findAll(spec, pageable)
+                .map(c -> { c.setCreatedByRole(resolveRole(c.getCreatedBy())); return c; });
     }
 
     @Override
     public List<Category> findAll() {
-        return categoryRepository.findAll();
+        List<Category> list = categoryRepository.findAll();
+        list.forEach(c -> c.setCreatedByRole(resolveRole(c.getCreatedBy())));
+        return list;
     }
 
     @Override
     public Optional<Category> findById(Long id) {
-        return categoryRepository.findById(id);
+        Optional<Category> opt = categoryRepository.findById(id);
+        opt.ifPresent(c -> c.setCreatedByRole(resolveRole(c.getCreatedBy())));
+        return opt;
     }
 
     @Override
     public Optional<Category> findByName(String name) {
-        return categoryRepository.findByName(name);
+        Optional<Category> opt = categoryRepository.findByName(name);
+        opt.ifPresent(c -> c.setCreatedByRole(resolveRole(c.getCreatedBy())));
+        return opt;
     }
 
     @Override
@@ -95,7 +115,9 @@ public class CategoryServiceImpl implements CategoryService {
             category.setCreatedBy(existingCategory.getCreatedBy()); // Preserve original creator
         }
 
-        return categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
+        saved.setCreatedByRole(resolveRole(saved.getCreatedBy()));
+        return saved;
     }
 
     @Override
