@@ -40,8 +40,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     private String resolveRole(String email) {
         if (email == null || email.isBlank()) return null;
-        if (adminRepository.findByEmail(email).isPresent()) return "admin";
+        // Ưu tiên kiểm tra giáo viên trước để tránh trường hợp trùng email với admin
         if (teacherRepository.findByEmail(email).isPresent()) return "teacher";
+        if (adminRepository.findByEmail(email).isPresent()) return "admin";
         return null;
     }
 
