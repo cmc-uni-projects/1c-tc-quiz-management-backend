@@ -21,9 +21,9 @@ public class ExamHistory {
     private Long id;
 
     // ====== Thông tin bài thi ======
-
-    @Column(name = "exam_id", nullable = false)
-    private Long examId;                    // ID bài thi (không tạo entity Exam riêng)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exam_id")
+    private Exam exam;                      // Quan hệ tới bảng Exam, dùng exam.getId() khi cần
 
     @Column(name = "exam_title", nullable = false, length = 255)
     private String examTitle;               // Tên bài thi
