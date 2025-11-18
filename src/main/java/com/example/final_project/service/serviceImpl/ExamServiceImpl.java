@@ -1,4 +1,4 @@
-package com.example.final_project.service.impl;
+package com.example.final_project.service.serviceImpl;
 
 import com.example.final_project.dto.ExamRequestDto;
 import com.example.final_project.entity.*;
@@ -38,11 +38,12 @@ public class ExamServiceImpl implements ExamService {
         exam = examRepository.save(exam);
 
         // Thêm câu hỏi vào exam
+        Exam finalExam = exam;
         List<ExamQuestion> examQuestions = dto.getQuestionIds().stream().map(qid -> {
             Question question = questionRepository.findById(qid)
                     .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại: " + qid));
             return ExamQuestion.builder()
-                    .exam(exam)
+                    .exam(finalExam)
                     .question(question)
                     .orderIndex(0) // Có thể cải thiện sau
                     .build();
@@ -65,7 +66,7 @@ public class ExamServiceImpl implements ExamService {
         }
 
         // Kiểm tra đã có người làm chưa
-        if (examRepository.existsByExamIdAndExamQuestions_StudentAnswers_NotEmpty(examId)) {
+        if (examRepository.hasSubmissions(examId)) {
             throw new RuntimeException("Không thể cập nhật bài thi đã có người làm");
         }
 

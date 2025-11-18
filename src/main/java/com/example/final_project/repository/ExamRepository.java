@@ -11,5 +11,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("SELECT e FROM Exam e WHERE e.teacher.teacherId = :teacherId ORDER BY e.createdAt DESC")
     List<Exam> findByTeacherIdOrderByCreatedAtDesc(Long teacherId);
 
-    boolean existsByExamIdAndExamQuestions_StudentAnswers_NotEmpty(Long examId);
+    @Query("SELECT count(h) > 0 FROM ExamHistory h WHERE h.exam.examId = :examId")
+    boolean hasSubmissions(Long examId);
 }
