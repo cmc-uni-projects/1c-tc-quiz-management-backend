@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 public class AdminController {
 
     @Autowired
@@ -29,7 +29,7 @@ public class AdminController {
     @Autowired
     private FileStorageService fileStorageService;
 
-    @GetMapping("/dashboard")
+    @GetMapping("/")
     public ResponseEntity<String> adminDashboard() {
         return ResponseEntity.ok("Welcome, Admin! (Đây là API response)");
     }
