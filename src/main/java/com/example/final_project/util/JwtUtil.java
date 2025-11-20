@@ -15,7 +15,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // TODO: Externalize the secret key and expiration time
-    private String SECRET_KEY = "secret";
+    private String SECRET_KEY = "a7b2b5e02452b4777a864ed0a941566f0739b6158514d331be94e5e412a875f2";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
