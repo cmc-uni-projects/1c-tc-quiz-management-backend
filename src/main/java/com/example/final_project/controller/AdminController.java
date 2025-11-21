@@ -44,10 +44,21 @@ public class AdminController {
         return teacherService.findAll();
     }
 
+    @DeleteMapping("/accounts/teachers/{id}")
+    public ResponseEntity<Void> deleteTeachers(@PathVariable Long id) {
+        teacherService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/accounts/students")
     public List<Student> getAllStudents() {
         return studentService.findAll();
+    }
+
+    @DeleteMapping("/accounts/students/{id}")
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+        studentService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/teachers/pending")
