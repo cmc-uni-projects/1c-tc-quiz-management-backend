@@ -29,9 +29,14 @@ public class AdminController {
     @Autowired
     private FileStorageService fileStorageService;
 
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<String> adminDashboard() {
         return ResponseEntity.ok("Welcome, Admin! (Đây là API response)");
+    }
+
+    @GetMapping("accounts/teachers")
+    public ResponseEntity<String> adminDashboard() {
+        return ResponseEntity.ok(teacherService.findAll());
     }
 
     @GetMapping("/teachers/pending")
