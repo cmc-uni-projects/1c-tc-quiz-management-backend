@@ -5,7 +5,8 @@ import lombok.*;
 
 @Entity
 @Table(name = "answers")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Answer {
@@ -20,5 +21,5 @@ public class Answer {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
-    private com.example.final_project.entity.Question question;
+    private Question question;
 }
