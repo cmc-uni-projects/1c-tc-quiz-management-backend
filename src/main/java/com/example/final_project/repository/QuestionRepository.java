@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     Page<Question> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Question> findByCreatedByOrderByCreatedAtDesc(String createdBy, Pageable pageable);
 }
