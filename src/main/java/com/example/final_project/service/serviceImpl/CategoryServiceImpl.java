@@ -112,6 +112,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setName(categoryRequest.getName());
         category.setDescription(categoryRequest.getDescription());
+        category.setCreatedByRole(resolveRole(category.getCreatedBy()));
+        category.setCreatedByName(resolveName(category.getCreatedBy()));
 
         Category savedCategory = categoryRepository.save(category);
         return toCategoryListDto(savedCategory);

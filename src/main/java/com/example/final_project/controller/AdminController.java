@@ -172,7 +172,6 @@ public class AdminController {
 
     @PutMapping("/questions/{id}")
     public ResponseEntity<QuestionResponseDto> updateQuestion(@PathVariable Long id, @Valid @RequestBody QuestionUpdateDto dto) {
-        // Admin can update any question without ownership check
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not authenticated");

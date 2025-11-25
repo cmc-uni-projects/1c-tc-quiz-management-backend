@@ -47,7 +47,13 @@ public class EntityDtoMapper {
         if (category == null) {
             return null;
         }
-        return new CategoryListDto(category.getId(), category.getName(), category.getDescription(), category.getCreatedByRole(), category.getCreatedByName());
+        CategoryListDto dto = new CategoryListDto();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setDescription(category.getDescription());
+        dto.setCreatedByRole(category.getCreatedByRole());
+        dto.setCreatedByName(category.getCreatedByName());
+        return dto;
     }
 
     public TeacherResponseDto toTeacherResponseDto(Teacher teacher) {
