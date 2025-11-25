@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
+import java.security.Principal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,7 +18,13 @@ public class QuestionController {
     private QuestionService questionService;
 
     @PostMapping("/create")
-    public ResponseEntity<QuestionResponseDto> create(@Valid @RequestBody QuestionCreateDto dto) {
+    public ResponseEntity<QuestionResponseDto> create(@Valid @RequestBody QuestionCreateDto dto, Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        // Set createdBy from authenticated user
+        String currentUser = principal.getName();
+        dto.setCreatedBy(currentUser);
         QuestionResponseDto q = questionService.createQuestion(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(q);
     }
@@ -33,19 +40,37 @@ public class QuestionController {
         return ResponseEntity.ok(p);
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<Page<QuestionResponseDto>> getMyQuestions(
+            @RequestParam(defaultValue = "0") int page, 
+            Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        String currentUser = principal.getName();
+        Page<QuestionResponseDto> p = questionService.getQuestionsByUser(currentUser, page, 10);
+        return ResponseEntity.ok(p);
+    }
+
     @PutMapping("/edit/{id}")
     public ResponseEntity<QuestionResponseDto> update(@PathVariable Long id,
                                     @Valid @RequestBody QuestionUpdateDto dto,
-                                    @RequestHeader(value = "X-User", required = false) String actor) {
-        if (actor == null) actor = dto.getAnswers().isEmpty() ? "unknown" : "unknown";
-        QuestionResponseDto updated = questionService.updateQuestion(id, dto, actor);
+                                    Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        String currentUser = principal.getName();
+        QuestionResponseDto updated = questionService.updateQuestion(id, dto, currentUser);
         return ResponseEntity.ok(updated);
     }
+    
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id,
-                                    @RequestHeader(value = "X-User", required = false) String actor) {
-        if (actor == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing X-User header");
-        questionService.deleteQuestion(id, actor);
+    public ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        String currentUser = principal.getName();
+        questionService.deleteQuestion(id, currentUser);
         return ResponseEntity.noContent().build();
     }
 

@@ -8,7 +8,10 @@ import org.springframework.data.domain.Page;
 public interface QuestionService {
     QuestionResponseDto createQuestion(QuestionCreateDto dto);
     QuestionResponseDto updateQuestion(Long id, QuestionUpdateDto dto, String actorUsername);
+    QuestionResponseDto updateQuestionAsAdmin(Long id, QuestionUpdateDto dto);
     QuestionResponseDto getQuestionById(Long id);
     Page<QuestionResponseDto> getAllQuestions(int page, int size);
+    Page<QuestionResponseDto> getQuestionsByUser(String username, int page, int size);
     void deleteQuestion(Long id, String actorUsername);
+    void deleteQuestionAsAdmin(Long id);
 }

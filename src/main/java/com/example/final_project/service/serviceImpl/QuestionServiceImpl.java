@@ -81,7 +81,15 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public Page<QuestionResponseDto> getAllQuestions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<Question> questionPage = questionRepo.findAll(pageable);
+        Page<Question> questionPage = questionRepo.findAllByOrderByCreatedAtDesc(pageable);
+        return questionPage.map(entityDtoMapper::toQuestionResponseDto);
+    }
+
+    // LIST BY USER (paged, newest first)
+    @Override
+    public Page<QuestionResponseDto> getQuestionsByUser(String username, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Question> questionPage = questionRepo.findByCreatedByOrderByCreatedAtDesc(username, pageable);
         return questionPage.map(entityDtoMapper::toQuestionResponseDto);
     }
 
@@ -155,6 +163,74 @@ public class QuestionServiceImpl implements QuestionService {
         if (examQuestionRepo.existsByQuestionId(id)) {
             throw new IllegalStateException("Không thể xóa câu hỏi đã được chọn vào bài thi.");
         }
+        questionRepo.delete(q);
+    }
+
+    // ADMIN METHODS - Full permissions
+    @Override
+    public QuestionResponseDto updateQuestionAsAdmin(Long id, QuestionUpdateDto dto) {
+        Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
+
+        // Check if already used in exam -> block update
+        if (examQuestionRepo.existsByQuestionId(id)) {
+            throw new IllegalStateException("Không thể cập nhật câu hỏi đã được chọn vào bài thi.");
+        }
+
+        // Admin can update any question - no ownership check
+
+        QuestionType type = QuestionType.valueOf(dto.getType());
+        if (type != QuestionType.TRUE_FALSE) {
+            validateAnswersByType(type, dto.getAnswers());
+        }
+
+        Category category = categoryRepo.findById(dto.getCategoryId())
+                .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
+
+        q.setTitle(dto.getTitle());
+        q.setType(type);
+        q.setDifficulty(dto.getDifficulty());
+        q.setCategory(category);
+
+        // Replace answers
+        q.getAnswers().clear();
+        if (type == QuestionType.TRUE_FALSE) {
+            q.setCorrectAnswer(dto.getCorrectAnswer());
+            Answer trueAnswer = new Answer();
+            trueAnswer.setText("True");
+            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
+            trueAnswer.setQuestion(q);
+            q.getAnswers().add(trueAnswer);
+
+            Answer falseAnswer = new Answer();
+            falseAnswer.setText("False");
+            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
+            falseAnswer.setQuestion(q);
+            q.getAnswers().add(falseAnswer);
+        } else {
+            q.setCorrectAnswer(null); // Reset correct answer if not TRUE_FALSE
+            List<Answer> newAnswers = dto.getAnswers().stream().map(aDto -> {
+                Answer a = new Answer();
+                a.setText(aDto.getText());
+                a.setCorrect(Boolean.TRUE.equals(aDto.getCorrect()));
+                a.setQuestion(q);
+                return a;
+            }).collect(Collectors.toList());
+            q.getAnswers().addAll(newAnswers);
+        }
+
+        Question updatedQuestion = questionRepo.save(q);
+        return entityDtoMapper.toQuestionResponseDto(updatedQuestion);
+    }
+
+    @Override
+    public void deleteQuestionAsAdmin(Long id) {
+        Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
+        
+        if (examQuestionRepo.existsByQuestionId(id)) {
+            throw new IllegalStateException("Không thể xóa câu hỏi đã được chọn vào bài thi.");
+        }
+        
+        // Admin can delete any question - no ownership check
         questionRepo.delete(q);
     }
 

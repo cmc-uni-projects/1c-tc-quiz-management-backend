@@ -1,19 +1,23 @@
 package com.example.final_project.controller;
 
-import com.example.final_project.dto.ProfileUpdateRequest;
+import com.example.final_project.dto.*;
 import com.example.final_project.entity.Student;
 import com.example.final_project.entity.Teacher;
 import com.example.final_project.service.FileStorageService;
 import com.example.final_project.service.ProfileService;
 import com.example.final_project.service.TeacherService;
 import com.example.final_project.service.StudentService;
+import com.example.final_project.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +37,9 @@ public class AdminController {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private QuestionService questionService;
 
     @GetMapping("")
     public ResponseEntity<String> adminDashboard() {
@@ -143,5 +150,45 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // Admin Question Management - Full permissions
+    @GetMapping("/questions")
+    public ResponseEntity<Page<QuestionResponseDto>> getAllQuestions(@RequestParam(defaultValue = "0") int page) {
+        Page<QuestionResponseDto> questions = questionService.getAllQuestions(page, 10);
+        return ResponseEntity.ok(questions);
+    }
+
+    @PostMapping("/questions")
+    public ResponseEntity<QuestionResponseDto> createQuestion(@Valid @RequestBody QuestionCreateDto dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not authenticated");
+        }
+        dto.setCreatedBy(auth.getName());
+        QuestionResponseDto question = questionService.createQuestion(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(question);
+    }
+
+    @PutMapping("/questions/{id}")
+    public ResponseEntity<QuestionResponseDto> updateQuestion(@PathVariable Long id, @Valid @RequestBody QuestionUpdateDto dto) {
+        // Admin can update any question without ownership check
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not authenticated");
+        }
+        QuestionResponseDto updated = questionService.updateQuestionAsAdmin(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/questions/{id}")
+    public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
+        // Admin can delete any question without ownership check
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin not authenticated");
+        }
+        questionService.deleteQuestionAsAdmin(id);
+        return ResponseEntity.noContent().build();
     }
 }
