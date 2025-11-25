@@ -2,9 +2,10 @@ package com.example.final_project.service.serviceImpl;
 
 import com.example.final_project.dto.*;
 import com.example.final_project.entity.*;
+import com.example.final_project.mapper.EntityDtoMapper;
 import com.example.final_project.repository.*;
 import com.example.final_project.service.QuestionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,18 +14,17 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class QuestionServiceImpl implements QuestionService {
 
-    @Autowired
-    private QuestionRepository questionRepo;
-    @Autowired
-    private CategoryRepository categoryRepo;
-    @Autowired
-    private ExamQuestionRepository examQuestionRepo;
+    private final QuestionRepository questionRepo;
+    private final CategoryRepository categoryRepo;
+    private final ExamQuestionRepository examQuestionRepo;
+    private final EntityDtoMapper entityDtoMapper;
 
     // CREATE
     @Override
-    public Question createQuestion(QuestionCreateDto dto) {
+    public QuestionResponseDto createQuestion(QuestionCreateDto dto) {
         QuestionType type = QuestionType.valueOf(dto.getType());
         validateAnswersByType(type, dto.getAnswers());
 
@@ -47,26 +47,29 @@ public class QuestionServiceImpl implements QuestionService {
         }).collect(Collectors.toList());
         q.setAnswers(answers);
 
-        return questionRepo.save(q);
+        Question savedQuestion = questionRepo.save(q);
+        return entityDtoMapper.toQuestionResponseDto(savedQuestion);
     }
 
     // GET SINGLE
     @Override
-    public Question getQuestionById(Long id) {
-        return questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
+    public QuestionResponseDto getQuestionById(Long id) {
+        Question question = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
+        return entityDtoMapper.toQuestionResponseDto(question);
     }
 
     // LIST (paged, newest first)
     @Override
-    public Page<Question> getAllQuestions(int page, int size) {
+    public Page<QuestionResponseDto> getAllQuestions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return questionRepo.findAll(pageable);
+        Page<Question> questionPage = questionRepo.findAll(pageable);
+        return questionPage.map(entityDtoMapper::toQuestionResponseDto);
     }
 
     // UPDATE
     @Override
-    public Question updateQuestion(Long id, QuestionUpdateDto dto, String actorUsername) {
-        Question q = getQuestionById(id);
+    public QuestionResponseDto updateQuestion(Long id, QuestionUpdateDto dto, String actorUsername) {
+        Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
 
         // Check if already used in exam -> block update
         if (examQuestionRepo.existsByQuestionId(id)) {
@@ -100,13 +103,14 @@ public class QuestionServiceImpl implements QuestionService {
         }).collect(Collectors.toList());
         q.getAnswers().addAll(newAnswers);
 
-        return questionRepo.save(q);
+        Question updatedQuestion = questionRepo.save(q);
+        return entityDtoMapper.toQuestionResponseDto(updatedQuestion);
     }
 
     // DELETE
     @Override
     public void deleteQuestion(Long id, String actorUsername) {
-        Question q = getQuestionById(id);
+        Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));;
 
         if (!q.getCreatedBy().equals(actorUsername)) {
             throw new SecurityException("Không có quyền xóa câu hỏi này.");

@@ -1,85 +1,71 @@
 package com.example.final_project.controller;
 
+import com.example.final_project.dto.CategoryListDto;
+import com.example.final_project.dto.CategoryRequest;
 import com.example.final_project.dto.CategorySearchRequest;
-import com.example.final_project.entity.Category;
-import com.example.final_project.entity.RoleName;
 import com.example.final_project.service.CategoryService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/categories")
 @Validated
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @Autowired
-    public CategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
-    }
-
     @GetMapping("/search")
-    public ResponseEntity<Page<Category>> searchCategories(
-            @Valid CategorySearchRequest request,
+    public ResponseEntity<Page<CategoryListDto>> searchCategories(
+            @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String sort) {
+            @RequestParam(defaultValue = "id,desc") String sort) {
+
+        CategorySearchRequest request = new CategorySearchRequest();
+        request.setName(name);
+        request.setPage(page);
+        request.setSize(size);
+        if (sort != null && sort.contains(",")) {
+            String[] sortParts = sort.split(",");
+            request.setSort(sortParts[0]);
+            request.setDirection(sortParts[1]);
+        }
 
         try {
-            // sort param format: "field,direction" (e.g. "id,desc").
-            // This also works with the default value "id,asc".
-            String[] sortParts = sort != null ? sort.split(",") : new String[]{"id", "asc"};
-            String sortField = sortParts.length > 0 && !sortParts[0].isBlank() ? sortParts[0].trim() : "id";
-            String sortDir = sortParts.length > 1 && !sortParts[1].isBlank() ? sortParts[1].trim() : "asc";
-
-            Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-
-            // Update request with sort info so service/repository can reuse it if needed
-            request.setPage(page);
-            request.setSize(size);
-            request.setSort(sortField);
-            request.setDirection(direction.name()); // convert Sort.Direction -> String
-
-            Page<Category> result = categoryService.findAll(request);
+            Page<CategoryListDto> result = categoryService.searchCategories(request);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort parameter", e);
+            // Consider more specific exception handling
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request parameters", e);
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.findAll());
+    public ResponseEntity<List<CategoryListDto>> getAllCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
     @GetMapping("/get/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
-        return categoryService.findById(id)
+    public ResponseEntity<CategoryListDto> getCategoryById(@PathVariable Long id) {
+        return categoryService.getCategoryById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+    public ResponseEntity<CategoryListDto> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
         try {
-            Category created = categoryService.save(category);
+            CategoryListDto created = categoryService.saveCategory(categoryRequest);
             return new ResponseEntity<>(created, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
@@ -89,17 +75,17 @@ public class CategoryController {
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<Category> updateCategory(
+    public ResponseEntity<CategoryListDto> updateCategory(
             @PathVariable Long id,
-            @Valid @RequestBody Category category) {
+            @Valid @RequestBody CategoryRequest categoryRequest) {
         
-        if (!id.equals(category.getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID in path and request body do not match");
-        }
+        categoryRequest.setId(id); // Ensure ID from path is used
         
         try {
-            Category updated = categoryService.save(category);
+            CategoryListDto updated = categoryService.saveCategory(categoryRequest);
             return ResponseEntity.ok(updated);
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (SecurityException e) {
@@ -110,14 +96,13 @@ public class CategoryController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         try {
-            categoryService.deleteById(id);
+            categoryService.deleteCategoryById(id);
             return ResponseEntity.noContent().build();
         } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+            // This could be 404 Not Found or 400 Bad Request depending on context
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (SecurityException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting category", e);
         }
     }
     
@@ -126,4 +111,3 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
     }
 }
-

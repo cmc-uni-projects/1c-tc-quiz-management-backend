@@ -25,4 +25,7 @@ public class ExamRequestDto {
 
     @NotEmpty(message = "Phải chọn ít nhất 1 câu hỏi")
     private List<Long> questionIds;
+
+    @NotNull(message = "Danh mục không được để trống")
+    private Long categoryId;
 }

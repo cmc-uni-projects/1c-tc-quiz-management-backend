@@ -1,7 +1,6 @@
 package com.example.final_project.controller;
 
 import com.example.final_project.dto.*;
-import com.example.final_project.entity.Question;
 import com.example.final_project.service.QuestionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,28 +17,28 @@ public class QuestionController {
     private QuestionService questionService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> create(@Valid @RequestBody QuestionCreateDto dto) {
-        Question q = questionService.createQuestion(dto);
+    public ResponseEntity<QuestionResponseDto> create(@Valid @RequestBody QuestionCreateDto dto) {
+        QuestionResponseDto q = questionService.createQuestion(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(q);
     }
 
     @GetMapping("/get/{id}")
-    public ResponseEntity<?> get(@PathVariable Long id) {
+    public ResponseEntity<QuestionResponseDto> get(@PathVariable Long id) {
         return ResponseEntity.ok(questionService.getQuestionById(id));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Page<Question>> list(@RequestParam(defaultValue = "0") int page) {
-        Page<Question> p = questionService.getAllQuestions(page, 10);
+    public ResponseEntity<Page<QuestionResponseDto>> list(@RequestParam(defaultValue = "0") int page) {
+        Page<QuestionResponseDto> p = questionService.getAllQuestions(page, 10);
         return ResponseEntity.ok(p);
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id,
+    public ResponseEntity<QuestionResponseDto> update(@PathVariable Long id,
                                     @Valid @RequestBody QuestionUpdateDto dto,
                                     @RequestHeader(value = "X-User", required = false) String actor) {
         if (actor == null) actor = dto.getAnswers().isEmpty() ? "unknown" : "unknown";
-        Question updated = questionService.updateQuestion(id, dto, actor);
+        QuestionResponseDto updated = questionService.updateQuestion(id, dto, actor);
         return ResponseEntity.ok(updated);
     }
     @DeleteMapping("/delete/{id}")

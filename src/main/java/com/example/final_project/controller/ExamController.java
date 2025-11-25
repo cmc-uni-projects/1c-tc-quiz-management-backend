@@ -1,7 +1,7 @@
 package com.example.final_project.controller;
 
 import com.example.final_project.dto.ExamRequestDto;
-import com.example.final_project.entity.Exam;
+import com.example.final_project.dto.ExamResponseDto;
 import com.example.final_project.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,53 +17,62 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('TEACHER'), hasRole('ADMIN')")
+@PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
 public class ExamController {
 
     private final ExamService examService;
 
     @PostMapping
-    public ResponseEntity<Exam> createExam(@Valid @RequestBody ExamRequestDto dto, Principal principal) {
-        Long teacherId = Long.parseLong(principal.getName()); // giả sử principal trả teacherId
-        Exam exam = examService.createExam(dto, teacherId);
+    public ResponseEntity<ExamResponseDto> createExam(@Valid @RequestBody ExamRequestDto dto, Principal principal) {
+        Long teacherId = getTeacherIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.createExam(dto, teacherId);
         return ResponseEntity.ok(exam);
     }
 
     @PutMapping("/update/{examId}")
-    public ResponseEntity<Exam> updateExam(
+    public ResponseEntity<ExamResponseDto> updateExam(
             @PathVariable Long examId,
             @Valid @RequestBody ExamRequestDto dto,
             Principal principal) {
-        Long teacherId = Long.parseLong(principal.getName());
-        Exam exam = examService.updateExam(examId, dto, teacherId);
+        Long teacherId = getTeacherIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.updateExam(examId, dto, teacherId);
         return ResponseEntity.ok(exam);
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<Exam>> getMyExams(Principal principal) {
-        Long teacherId = Long.parseLong(principal.getName());
-        List<Exam> exams = examService.getExamsByTeacher(teacherId);
+    public ResponseEntity<List<ExamResponseDto>> getMyExams(Principal principal) {
+        Long teacherId = getTeacherIdFromPrincipal(principal);
+        List<ExamResponseDto> exams = examService.getExamsByTeacher(teacherId);
         return ResponseEntity.ok(exams);
     }
 
     @GetMapping("/{examId}")
-    public ResponseEntity<Exam> getExam(@PathVariable Long examId, Principal principal) {
-        Long teacherId = Long.parseLong(principal.getName());
-        Exam exam = examService.getExamById(examId, teacherId);
+    public ResponseEntity<ExamResponseDto> getExam(@PathVariable Long examId, Principal principal) {
+        Long teacherId = getTeacherIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.getExamById(examId, teacherId);
         return ResponseEntity.ok(exam);
     }
 
     @DeleteMapping("/delete/{examId}")
-    public ResponseEntity<Exam> deleteExam(@PathVariable Long examId, Long teacherId, Principal principal) {
+    public ResponseEntity<Void> deleteExam(@PathVariable Long examId, Principal principal) {
+        Long teacherId = getTeacherIdFromPrincipal(principal);
         try {
             examService.deleteExamById(examId, teacherId);
             return ResponseEntity.noContent().build();
-        } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
-        } catch (SecurityException e) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage(), e);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting exam", e);
+        } catch (RuntimeException e) {
+            // Can be more specific with custom exceptions
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
+    private Long getTeacherIdFromPrincipal(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác thực được người dùng");
+        }
+        try {
+            return Long.parseLong(principal.getName());
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "ID người dùng không hợp lệ");
         }
     }
 }
