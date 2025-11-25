@@ -1,29 +1,17 @@
 package com.example.final_project.service;
 
-import com.example.final_project.entity.Category;
+import com.example.final_project.dto.CategoryListDto;
+import com.example.final_project.dto.CategoryRequest;
+import com.example.final_project.dto.CategorySearchRequest;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 
-import com.example.final_project.dto.CategoryListDto;
-
-
 public interface CategoryService {
-
-    Page<CategoryListDto> findAllPage(Pageable pageable);
-
-   // List<Category> findAll();
-
-    List<CategoryListDto> findAll();
-
-
-    Optional<Category> findById(Long id);
-
-    Optional<Category> findByName(String name);
-
-    Category save(Category category);
-
-    void deleteById(Long id);
+    Page<CategoryListDto> searchCategories(CategorySearchRequest request);
+    List<CategoryListDto> getAllCategories();
+    Optional<CategoryListDto> getCategoryById(Long id);
+    CategoryListDto saveCategory(CategoryRequest categoryRequest);
+    void deleteCategoryById(Long id);
 }

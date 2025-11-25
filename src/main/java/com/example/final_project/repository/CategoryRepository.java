@@ -12,11 +12,11 @@ import java.util.Optional;
 import com.example.final_project.dto.CategoryListDto;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSpecificationExecutor<CategoryListDto> {
+public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSpecificationExecutor<Category> {
 
-    Optional<CategoryListDto> findById(Long id);
+    Optional<Category> findById(Long id);
 
-    Optional<CategoryListDto> findByName(String name);
+    Optional<Category> findByName(String name);
 
     Optional<Category> findByNameAndIdNot(String name, Long id);
 

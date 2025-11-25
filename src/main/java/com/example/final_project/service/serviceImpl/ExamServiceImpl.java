@@ -1,7 +1,9 @@
 package com.example.final_project.service.serviceImpl;
 
 import com.example.final_project.dto.ExamRequestDto;
+import com.example.final_project.dto.ExamResponseDto;
 import com.example.final_project.entity.*;
+import com.example.final_project.mapper.EntityDtoMapper;
 import com.example.final_project.repository.*;
 import com.example.final_project.service.ExamService;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,17 @@ public class ExamServiceImpl implements ExamService {
     private final TeacherRepository teacherRepository;
     private final QuestionRepository questionRepository;
     private final ExamQuestionRepository examQuestionRepository;
+    private final CategoryRepository categoryRepository;
+    private final EntityDtoMapper entityDtoMapper;
+
 
     @Override
     @Transactional
-    public Exam createExam(ExamRequestDto dto, Long teacherId) {
+    public ExamResponseDto createExam(ExamRequestDto dto, Long teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"));
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
 
         Exam exam = Exam.builder()
                 .title(dto.getTitle())
@@ -34,6 +41,7 @@ public class ExamServiceImpl implements ExamService {
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
                 .teacher(teacher)
+                .category(category)
                 .build();
 
         exam = examRepository.save(exam);
@@ -54,12 +62,12 @@ public class ExamServiceImpl implements ExamService {
         examQuestionRepository.saveAll(examQuestions);
         exam.setExamQuestions(examQuestions);
 
-        return exam;
+        return entityDtoMapper.toExamResponseDto(exam);
     }
 
     @Override
     @Transactional
-    public Exam updateExam(Long examId, ExamRequestDto dto, Long teacherId) {
+    public ExamResponseDto updateExam(Long examId, ExamRequestDto dto, Long teacherId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
 
@@ -70,15 +78,20 @@ public class ExamServiceImpl implements ExamService {
         if (examRepository.hasSubmissions(examId)) {
             throw new RuntimeException("Không thể cập nhật bài thi đã có người làm");
         }
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
+
 
         exam.setTitle(dto.getTitle());
         exam.setDescription(dto.getDescription());
         exam.setDurationMinutes(dto.getDurationMinutes());
         exam.setStartTime(dto.getStartTime());
         exam.setEndTime(dto.getEndTime());
+        exam.setCategory(category);
 
         // Xóa câu hỏi cũ
         examQuestionRepository.deleteAll(exam.getExamQuestions());
+        exam.getExamQuestions().clear();
 
         // Thêm câu hỏi mới
         AtomicInteger index = new AtomicInteger(0);
@@ -95,25 +108,37 @@ public class ExamServiceImpl implements ExamService {
         examQuestionRepository.saveAll(newQuestions);
         exam.setExamQuestions(newQuestions);
 
-        return examRepository.save(exam);
+        Exam savedExam = examRepository.save(exam);
+        return entityDtoMapper.toExamResponseDto(savedExam);
     }
 
     @Override
-    public List<Exam> getExamsByTeacher(Long teacherId) {
-        return examRepository.findByTeacherIdOrderByCreatedAtDesc(teacherId);
+    public List<ExamResponseDto> getExamsByTeacher(Long teacherId) {
+        return examRepository.findByTeacherIdOrderByCreatedAtDesc(teacherId).stream()
+                .map(entityDtoMapper::toExamResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Exam getExamById(Long examId, Long teacherId) {
+    public ExamResponseDto getExamById(Long examId, Long teacherId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
         if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
             throw new RuntimeException("Bạn không có quyền xem bài thi này");
         }
-        return exam;
+        return entityDtoMapper.toExamResponseDto(exam);
     }
 
     @Override
     public void deleteExamById(Long examId, Long teacherId) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
+        if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
+            throw new RuntimeException("Bạn không có quyền xóa bài thi này");
+        }
+        if (examRepository.hasSubmissions(examId)) {
+            throw new RuntimeException("Không thể xóa bài thi đã có người làm");
+        }
+        examRepository.deleteById(examId);
     }
 }
