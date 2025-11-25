@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.final_project.dto.CategoryListDto;
+
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
@@ -60,36 +62,39 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<Category> findAll(CategorySearchRequest request) {
-        // Build Sort using direction + property; default values are handled in CategorySearchRequest
-        Sort.Direction direction = request.isAscending() ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = Sort.by(direction, request.getSort());
-        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+    public Page<CategoryListDto> findAllPage(Pageable pageable) {
+        Page<Category> categoryPage = categoryRepository.findAll(pageable);
 
-        Specification<Category> spec = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (StringUtils.hasText(request.getName())) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + request.getName().toLowerCase() + "%"));
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
+        Page<CategoryListDto> dtoPage = categoryPage.map(c -> {
+            CategoryListDto dto = new CategoryListDto();
+            dto.setId(c.getId());
+            dto.setName(c.getName());
+            dto.setDescription(c.getDescription());
+            dto.setCreatedByRole(resolveRole(c.getCreatedBy()));
+            dto.setCreatedByName(resolveName(c.getCreatedBy()));
+            return dto;
+        });
 
-        return categoryRepository.findAll(spec, pageable)
-                .map(c -> {
-                    c.setCreatedByRole(resolveRole(c.getCreatedBy()));
-                    c.setCreatedByName(resolveName(c.getCreatedBy()));
-                    return c;
-                });
+        return dtoPage;
     }
 
     @Override
-    public List<Category> findAll() {
+    public List<CategoryListDto> findAll() {
         List<Category> list = categoryRepository.findAll();
-        list.forEach(c -> {
-            c.setCreatedByRole(resolveRole(c.getCreatedBy()));
-            c.setCreatedByName(resolveName(c.getCreatedBy()));
-        });
-        return list;
+
+
+        List<CategoryListDto> dtoList = new ArrayList<>();
+
+        for (Category category : list) {
+            CategoryListDto dto = new CategoryListDto();
+            dto.setId(category.getId());
+            dto.setName(category.getName());
+            dto.setDescription(category.getDescription());
+            dto.setCreatedByRole(resolveRole(category.getCreatedBy()));
+            dto.setCreatedByName(resolveName(category.getCreatedBy()));
+            dtoList.add(dto);
+        }
+        return dtoList;
     }
 
     @Override

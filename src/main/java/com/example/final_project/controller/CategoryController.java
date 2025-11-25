@@ -4,7 +4,9 @@ import com.example.final_project.dto.CategorySearchRequest;
 import com.example.final_project.entity.Category;
 import com.example.final_project.entity.RoleName;
 import com.example.final_project.service.CategoryService;
+
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +24,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.final_project.dto.CategoryListDto;
+
 @RestController
 @RequestMapping("/api/categories")
 @Validated
@@ -29,7 +33,7 @@ public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @Autowired
+
     public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
@@ -57,7 +61,7 @@ public class CategoryController {
             request.setSort(sortField);
             request.setDirection(direction.name()); // convert Sort.Direction -> String
 
-            Page<Category> result = categoryService.findAll(request);
+            Page<CategoryListDto> result = categoryService.findAll(request);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid sort parameter", e);
@@ -65,7 +69,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
+    public ResponseEntity<List<CategoryListDto>> getAllCategories() {
         return ResponseEntity.ok(categoryService.findAll());
     }
 
