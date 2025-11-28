@@ -9,8 +9,13 @@ import com.example.final_project.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,11 +35,16 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public ExamResponseDto createExam(ExamRequestDto dto, Long teacherId) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"));
+    public ExamResponseDto createExam(ExamRequestDto dto, Long userId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin không thể tạo bài thi trực tiếp. Một bài thi phải được tạo bởi một giáo viên.");
+        }
+
+        Teacher teacher = teacherRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giáo viên với ID: " + userId));
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
 
         Exam exam = Exam.builder()
                 .title(dto.getTitle())
@@ -53,7 +63,7 @@ public class ExamServiceImpl implements ExamService {
         AtomicInteger index = new AtomicInteger(0);
         List<ExamQuestion> examQuestions = dto.getQuestionIds().stream().map(qid -> {
             Question question = questionRepository.findById(qid)
-                    .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại: " + qid));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
             return ExamQuestion.builder()
                     .exam(finalExam)
                     .question(question)
@@ -69,19 +79,22 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public ExamResponseDto updateExam(Long examId, ExamRequestDto dto, Long teacherId) {
+    public ExamResponseDto updateExam(Long examId, ExamRequestDto dto, Long userId) {
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài thi không tồn tại"));
 
-        if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
-            throw new RuntimeException("Bạn không có quyền chỉnh sửa bài thi này");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        if (!isAdmin && !exam.getTeacher().getTeacherId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chỉnh sửa bài thi này");
         }
 
         if (examRepository.hasSubmissions(examId)) {
-            throw new RuntimeException("Không thể cập nhật bài thi đã có người làm");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể cập nhật bài thi đã có người làm");
         }
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
 
 
         exam.setTitle(dto.getTitle());
@@ -99,7 +112,7 @@ public class ExamServiceImpl implements ExamService {
         AtomicInteger index = new AtomicInteger(0);
         List<ExamQuestion> newQuestions = dto.getQuestionIds().stream().map(qid -> {
             Question q = questionRepository.findById(qid)
-                    .orElseThrow(() -> new RuntimeException("Câu hỏi không tồn tại: " + qid));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
             return ExamQuestion.builder()
                     .exam(exam)
                     .question(q)
@@ -128,24 +141,32 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public ExamResponseDto getExamById(Long examId, Long teacherId) {
+    public ExamResponseDto getExamById(Long examId, Long userId) {
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
-        if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
-            throw new RuntimeException("Bạn không có quyền xem bài thi này");
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài thi không tồn tại"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        if (!isAdmin && !exam.getTeacher().getTeacherId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem bài thi này");
         }
         return entityDtoMapper.toExamResponseDto(exam);
     }
 
     @Override
-    public void deleteExamById(Long examId, Long teacherId) {
+    public void deleteExamById(Long examId, Long userId) {
         Exam exam = examRepository.findById(examId)
-                .orElseThrow(() -> new RuntimeException("Bài thi không tồn tại"));
-        if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
-            throw new RuntimeException("Bạn không có quyền xóa bài thi này");
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài thi không tồn tại"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        if (!isAdmin && !exam.getTeacher().getTeacherId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa bài thi này");
         }
         if (examRepository.hasSubmissions(examId)) {
-            throw new RuntimeException("Không thể xóa bài thi đã có người làm");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể xóa bài thi đã có người làm");
         }
         examRepository.deleteById(examId);
     }
