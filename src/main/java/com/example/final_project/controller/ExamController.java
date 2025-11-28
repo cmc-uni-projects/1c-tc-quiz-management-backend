@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,8 +28,8 @@ public class ExamController {
 
     @PostMapping
     public ResponseEntity<ExamResponseDto> createExam(@Valid @RequestBody ExamRequestDto dto, Principal principal) {
-        Long teacherId = getTeacherIdFromPrincipal(principal);
-        ExamResponseDto exam = examService.createExam(dto, teacherId);
+        Long userId = getUserIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.createExam(dto, userId);
         return ResponseEntity.ok(exam);
     }
 
@@ -36,36 +38,40 @@ public class ExamController {
             @PathVariable Long examId,
             @Valid @RequestBody ExamRequestDto dto,
             Principal principal) {
-        Long teacherId = getTeacherIdFromPrincipal(principal);
-        ExamResponseDto exam = examService.updateExam(examId, dto, teacherId);
+        Long userId = getUserIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.updateExam(examId, dto, userId);
         return ResponseEntity.ok(exam);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<Page<ExamResponseDto>> getAllExams(Pageable pageable) {
         Page<ExamResponseDto> exams = examService.getAllExams(pageable);
         return ResponseEntity.ok(exams);
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<ExamResponseDto>> getMyExams(Principal principal) {
-        Long teacherId = getTeacherIdFromPrincipal(principal);
-        List<ExamResponseDto> exams = examService.getExamsByTeacher(teacherId);
-        return ResponseEntity.ok(exams);
+    public ResponseEntity<List<ExamResponseDto>> getMyExams(Authentication authentication) {
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            return ResponseEntity.ok(examService.getAllExams(Pageable.unpaged()).getContent());
+        } else {
+            Long teacherId = getUserIdFromPrincipal(authentication);
+            List<ExamResponseDto> exams = examService.getExamsByTeacher(teacherId);
+            return ResponseEntity.ok(exams);
+        }
     }
 
     @GetMapping("/{examId}")
     public ResponseEntity<ExamResponseDto> getExam(@PathVariable Long examId, Principal principal) {
-        Long teacherId = getTeacherIdFromPrincipal(principal);
-        ExamResponseDto exam = examService.getExamById(examId, teacherId);
+        Long userId = getUserIdFromPrincipal(principal);
+        ExamResponseDto exam = examService.getExamById(examId, userId);
         return ResponseEntity.ok(exam);
     }
 
     @DeleteMapping("/delete/{examId}")
     public ResponseEntity<Void> deleteExam(@PathVariable Long examId, Principal principal) {
-        Long teacherId = getTeacherIdFromPrincipal(principal);
+        Long userId = getUserIdFromPrincipal(principal);
         try {
-            examService.deleteExamById(examId, teacherId);
+            examService.deleteExamById(examId, userId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             // Can be more specific with custom exceptions
@@ -73,7 +79,7 @@ public class ExamController {
         }
     }
 
-    private Long getTeacherIdFromPrincipal(Principal principal) {
+    private Long getUserIdFromPrincipal(Principal principal) {
         if (principal == null || principal.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác thực được người dùng");
         }
