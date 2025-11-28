@@ -28,4 +28,9 @@ public class ExamRequestDto {
 
     @NotNull(message = "Danh mục không được để trống")
     private Long categoryId;
+
+    @NotNull(message = "Trạng thái không được để trống")
+    private com.example.final_project.entity.ExamStatus status = com.example.final_project.entity.ExamStatus.PUBLIC;
+
+    private List<String> allowedStudentEmails;
 }

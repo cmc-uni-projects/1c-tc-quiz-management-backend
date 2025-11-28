@@ -27,14 +27,14 @@ public class ExamController {
 
     private final ExamService examService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ExamResponseDto> createExam(@Valid @RequestBody ExamRequestDto dto, Principal principal) {
         Long userId = getAuthenticatedUserId(principal);
         ExamResponseDto exam = examService.createExam(dto, userId);
         return ResponseEntity.ok(exam);
     }
 
-    @PutMapping("/update/{examId}")
+    @PatchMapping("/update/{examId}")
     public ResponseEntity<ExamResponseDto> updateExam(
             @PathVariable Long examId,
             @Valid @RequestBody ExamRequestDto dto,
@@ -62,7 +62,7 @@ public class ExamController {
         }
     }
 
-    @GetMapping("/{examId}")
+    @GetMapping("/get/{examId}")
     public ResponseEntity<ExamResponseDto> getExam(@PathVariable Long examId, Principal principal) {
         Long userId = getAuthenticatedUserId(principal);
         ExamResponseDto exam = examService.getExamById(examId, userId);

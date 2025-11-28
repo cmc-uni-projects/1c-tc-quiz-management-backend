@@ -32,4 +32,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
             "LOWER(s.email) LIKE LOWER(CONCAT('%', :email, '%')) AND " +
             "LOWER(s.username) LIKE LOWER(CONCAT('%', :username, '%'))")
     Page<Student> searchByEmailAndUsername(@Param("email") String email, @Param("username") String username, Pageable pageable);
+
+    List<Student> findByEmailIn(List<String> emails);
 }
