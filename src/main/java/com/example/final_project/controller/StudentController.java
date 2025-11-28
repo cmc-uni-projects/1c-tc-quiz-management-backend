@@ -50,7 +50,7 @@ public class StudentController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
         Optional<Student> student = studentService.findById(id);
         return student.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -61,7 +61,7 @@ public class StudentController {
         return studentService.save(student);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/edit/{id}")
     public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
         Optional<Student> studentOptional = studentService.findById(id);
         if (studentOptional.isPresent()) {
@@ -75,7 +75,7 @@ public class StudentController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
         studentService.deleteById(id);
         return ResponseEntity.noContent().build();

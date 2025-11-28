@@ -52,7 +52,7 @@ public class QuestionController {
         return ResponseEntity.ok(p);
     }
 
-    @PutMapping("/update/{id}")
+    @PatchMapping("/edit/{id}")
     public ResponseEntity<QuestionResponseDto> update(@PathVariable Long id,
                                     @Valid @RequestBody QuestionUpdateDto dto,
                                     Principal principal) {
