@@ -29,7 +29,7 @@ public class TeacherController {
         return teacherService.searchTeachers(request);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public ResponseEntity<Teacher> getTeacherById(@PathVariable Long id) {
         Optional<Teacher> teacher = teacherService.findById(id);
         return teacher.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -40,7 +40,7 @@ public class TeacherController {
         return teacherService.save(teacher);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/edit/{id}")
     public ResponseEntity<Teacher> updateTeacher(@PathVariable Long id, @RequestBody Teacher teacherDetails) {
         Optional<Teacher> teacherOptional = teacherService.findById(id);
         if (teacherOptional.isPresent()) {
@@ -54,7 +54,7 @@ public class TeacherController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteTeacher(@PathVariable Long id) {
         teacherService.deleteById(id);
         return ResponseEntity.noContent().build();

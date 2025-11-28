@@ -74,7 +74,7 @@ public class CategoryController {
         }
     }
 
-    @PutMapping("/edit/{id}")
+    @PatchMapping("/edit/{id}")
     public ResponseEntity<CategoryListDto> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest categoryRequest) {

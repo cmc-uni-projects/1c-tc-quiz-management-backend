@@ -47,7 +47,7 @@ public class ProfileController {
         }
     }
 
-    @PutMapping("/update")
+    @PatchMapping("/update")
     public ResponseEntity<String> updateProfile(@RequestBody ProfileUpdateRequest request) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
