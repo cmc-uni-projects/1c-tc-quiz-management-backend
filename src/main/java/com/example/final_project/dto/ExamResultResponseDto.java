@@ -15,6 +15,7 @@ public class ExamResultResponseDto {
     private Long examHistoryId;
     private Long examId;
     private String examTitle;
+    private String displayName;
     private Double score;
     private Integer correctCount;
     private Integer wrongCount;

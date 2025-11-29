@@ -58,6 +58,11 @@ public class ExamHistory {
     @Column(name = "attempt_number", nullable = false)
     private Integer attemptNumber;
 
+    @Lob
+    @Column(name = "submitted_answers", columnDefinition = "TEXT")
+    private String submittedAnswers;
+
+
     @PrePersist
     public void prePersist() {
         if (this.submittedAt == null) {

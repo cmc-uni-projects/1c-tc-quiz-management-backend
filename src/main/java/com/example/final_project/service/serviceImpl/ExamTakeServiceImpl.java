@@ -5,6 +5,8 @@ import com.example.final_project.entity.*;
 import com.example.final_project.mapper.EntityDtoMapper;
 import com.example.final_project.repository.*;
 import com.example.final_project.service.ExamTakeService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class ExamTakeServiceImpl implements ExamTakeService {
     private final ExamHistoryRepository examHistoryRepository;
     private final QuestionRepository questionRepository;
     private final EntityDtoMapper entityDtoMapper;
+    private final ObjectMapper objectMapper;
 
 
     @Override
@@ -106,6 +109,12 @@ public class ExamTakeServiceImpl implements ExamTakeService {
         examHistory.setCorrectCount(correctCount);
         examHistory.setWrongCount(wrongCount);
         examHistory.setSubmittedAt(LocalDateTime.now());
+
+        try {
+            examHistory.setSubmittedAnswers(objectMapper.writeValueAsString(submittedAnswers));
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xử lý câu trả lời của bạn.", e);
+        }
 
         ExamHistory savedHistory = examHistoryRepository.save(examHistory);
 

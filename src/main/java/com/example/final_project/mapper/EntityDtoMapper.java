@@ -124,6 +124,7 @@ public class EntityDtoMapper {
                 .examHistoryId(examHistory.getId())
                 .examId(examHistory.getExam().getExamId())
                 .examTitle(examHistory.getExamTitle())
+                .displayName(examHistory.getDisplayName())
                 .score(examHistory.getScore())
                 .correctCount(examHistory.getCorrectCount())
                 .wrongCount(examHistory.getWrongCount())
