@@ -20,4 +20,5 @@ public interface ExamOnlineRepository extends JpaRepository<ExamOnline, Long> {
     Optional<ExamOnline> findByNameAndTeacher_TeacherId(String name, Long teacherId);
     Optional<ExamOnline> findByAccessCode(String accessCode);
     List<ExamOnline> findByTeacher_TeacherIdOrderByCreatedAtDesc(Long teacherId);
+    Optional<ExamOnline> findByNameAndTeacherIsNull(String name);
 }
