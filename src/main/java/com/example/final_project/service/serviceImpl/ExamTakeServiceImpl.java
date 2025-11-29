@@ -99,7 +99,7 @@ public class ExamTakeServiceImpl implements ExamTakeService {
         examHistory.setExam(exam);
         examHistory.setExamTitle(exam.getTitle());
         examHistory.setTotalQuestions(totalQuestions);
-        examHistory.setDifficulty(exam.getCategory().getCategoryName());
+        examHistory.setDifficulty(exam.getCategory().getName());
         examHistory.setStudent(student);
         examHistory.setDisplayName(student.getUsername());
         examHistory.setScore(score);
