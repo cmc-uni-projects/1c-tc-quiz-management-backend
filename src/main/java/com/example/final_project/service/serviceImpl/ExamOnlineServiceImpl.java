@@ -8,9 +8,11 @@ import com.example.final_project.repository.ExamHistoryRepository;
 import com.example.final_project.repository.ExamOnlineRepository;
 import com.example.final_project.repository.QuestionRepository;
 import com.example.final_project.repository.TeacherRepository;
+import com.example.final_project.service.CustomUserDetails;
 import com.example.final_project.service.ExamOnlineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,7 +25,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExamOnlineServiceImpl implements ExamOnlineService {
 
-
     private final ExamOnlineRepository examOnlineRepository;
     private final TeacherRepository teacherRepository;
     private final QuestionRepository questionRepository;
@@ -32,15 +33,30 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     @Override
     @Transactional
-    public ExamOnlineResponse createExamOnline(ExamOnlineRequest request, Long teacherId) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giáo viên"));
+    public ExamOnlineResponse createExamOnline(ExamOnlineRequest request, Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        examOnlineRepository.findByNameAndTeacher_TeacherId(request.getName().trim(), teacherId)
+        Teacher teacher = null; // Default to null
+
+        if (isAdmin) {
+            // For ADMIN, check for duplicate name among other admin-created exams
+            examOnlineRepository.findByNameAndTeacherIsNull(request.getName().trim())
+                .ifPresent(e -> {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "An exam with this name already exists for ADMIN.");
+                });
+        } else {
+            // For TEACHER, find their record and check for duplicates under their name
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long teacherId = userDetails.getId();
+            teacher = teacherRepository.findById(teacherId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giáo viên"));
+            
+            examOnlineRepository.findByNameAndTeacher_TeacherId(request.getName().trim(), teacherId)
                 .ifPresent(e -> {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên bài thi đã tồn tại trong danh sách của bạn");
                 });
-
+        }
 
         List<Question> availableQuestions = questionRepository.findByDifficulty(request.getLevel().name());
         if (availableQuestions.size() < request.getNumberOfQuestions()) {
@@ -62,8 +78,8 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
                 .maxParticipants(request.getMaxParticipants())
                 .accessCode(code)
                 .status(ExamStatus.PENDING)
-                .teacher(teacher)
-                .questions(selectedQuestions) // Gán các câu hỏi đã chọn
+                .teacher(teacher) // Can be null for ADMIN
+                .questions(selectedQuestions)
                 .build();
 
         exam = examOnlineRepository.save(exam);
@@ -72,8 +88,8 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     @Override
     @Transactional
-    public ExamOnlineResponse startExamOnline(Long examOnlineId, Long teacherId) {
-        ExamOnline exam = getOwnedExam(examOnlineId, teacherId);
+    public ExamOnlineResponse startExamOnline(Long examOnlineId, Authentication authentication) {
+        ExamOnline exam = getOwnedExam(examOnlineId, authentication);
         if (exam.getStatus() != ExamStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bài thi đã bắt đầu hoặc đã kết thúc, không thể start.");
         }
@@ -82,9 +98,8 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
     }
 
     @Override
-    public ExamOnlineResultsDto getExamOnlineResults(Long examOnlineId, Long teacherId) {
-        ExamOnline exam = getOwnedExam(examOnlineId, teacherId);
-
+    public ExamOnlineResultsDto getExamOnlineResults(Long examOnlineId, Authentication authentication) {
+        ExamOnline exam = getOwnedExam(examOnlineId, authentication);
 
         List<ExamHistory> histories = examHistoryRepository.findByExamOnline_IdOrderByScoreDesc(examOnlineId);
         long totalParticipants = histories.stream().map(ExamHistory::getStudent).distinct().count();
@@ -111,31 +126,38 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     @Override
     public List<ExamOnlineResponse> getMyOnlineExams(Long teacherId) {
-
         return examOnlineRepository.findByTeacher_TeacherIdOrderByCreatedAtDesc(teacherId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ExamOnlineResponse getExamOnlineById(Long examOnlineId, Long teacherId) {
-        return mapToResponse(getOwnedExam(examOnlineId, teacherId));
+    public ExamOnlineResponse getExamOnlineById(Long examOnlineId, Authentication authentication) {
+        return mapToResponse(getOwnedExam(examOnlineId, authentication));
     }
 
     @Override
     @Transactional
-    public ExamOnlineResponse updateExamOnline(Long id, ExamOnlineRequest request, Long teacherId) {
-        ExamOnline exam = getOwnedExam(id, teacherId);
+    public ExamOnlineResponse updateExamOnline(Long id, ExamOnlineRequest request, Authentication authentication) {
+        ExamOnline exam = getOwnedExam(id, authentication);
         if (exam.getStatus() != ExamStatus.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ được chỉnh sửa bài thi khi trạng thái là PENDING");
         }
-
-        examOnlineRepository.findByNameAndTeacher_TeacherId(request.getName().trim(), teacherId)
+        
+        if (exam.getTeacher() == null) { // Admin-created exam
+             examOnlineRepository.findByNameAndTeacherIsNull(request.getName().trim()).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên bài thi đã tồn tại cho ADMIN");
+                }
+            });
+        } else { // Teacher-created exam
+            examOnlineRepository.findByNameAndTeacher_TeacherId(request.getName().trim(), exam.getTeacher().getTeacherId())
                 .ifPresent(existing -> {
                     if (!existing.getId().equals(id)) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên bài thi đã tồn tại");
                     }
                 });
+        }
 
         exam.setName(request.getName().trim());
         exam.setNumberOfQuestions(request.getNumberOfQuestions());
@@ -143,7 +165,7 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         exam.setSubmissionDeadline(request.getSubmissionDeadline());
         exam.setPassingScore(request.getPassingScore());
         exam.setMaxParticipants(request.getMaxParticipants());
-        // Cập nhật lại câu hỏi nếu cần
+        
         List<Question> availableQuestions = questionRepository.findByDifficulty(request.getLevel().name());
         if (availableQuestions.size() < request.getNumberOfQuestions()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không đủ câu hỏi cho yêu cầu mới.");
@@ -159,8 +181,8 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     @Override
     @Transactional
-    public ExamOnlineResponse finishExamOnline(Long examOnlineId, Long teacherId) {
-        ExamOnline exam = getOwnedExam(examOnlineId, teacherId);
+    public ExamOnlineResponse finishExamOnline(Long examOnlineId, Authentication authentication) {
+        ExamOnline exam = getOwnedExam(examOnlineId, authentication);
         if (exam.getStatus() != ExamStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể kết thúc bài thi khi trạng thái đang IN_PROGRESS");
         }
@@ -170,23 +192,42 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     @Override
     @Transactional
-    public void deleteExamOnlineById(Long examOnlineId, Long teacherId) {
-        ExamOnline exam = getOwnedExam(examOnlineId, teacherId);
+    public void deleteExamOnlineById(Long examOnlineId, Authentication authentication) {
+        ExamOnline exam = getOwnedExam(examOnlineId, authentication);
         if (exam.getStatus() == ExamStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể xóa bài thi đang diễn ra");
         }
-
         if (examHistoryRepository.existsByExamOnlineId(examOnlineId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể xóa bài thi đã có người làm.");
         }
         examOnlineRepository.delete(exam);
     }
 
-    private ExamOnline getOwnedExam(Long examId, Long teacherId) {
+    @Override
+    public List<ExamOnlineResponse> getAllOnlineExams() {
+        return examOnlineRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ExamOnline getOwnedExam(Long examId, Authentication authentication) {
         ExamOnline exam = examOnlineRepository.findById(examId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bài thi"));
-        if (!exam.getTeacher().getTeacherId().equals(teacherId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập bài thi này");
+        
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (isAdmin) {
+            return exam; // Admin can access any exam
+        }
+
+        if (exam.getTeacher() == null) {
+             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập bài thi này (dành cho admin).");
+        }
+        
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        if (!exam.getTeacher().getTeacherId().equals(userDetails.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập bài thi này.");
         }
         return exam;
     }
@@ -215,9 +256,11 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         dto.setAccessCode(exam.getAccessCode());
         dto.setStatus(exam.getStatus());
         dto.setCreatedAt(exam.getCreatedAt());
+        
         if (exam.getTeacher() != null) {
-
             dto.setTeacherName(exam.getTeacher().getUsername());
+        } else {
+            dto.setTeacherName("ADMIN");
         }
         return dto;
     }
