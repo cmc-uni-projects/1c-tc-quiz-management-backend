@@ -109,9 +109,10 @@ public class QuestionServiceImpl implements QuestionService {
         Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
 
         // Check if already used in exam -> block update
-        if (examQuestionRepo.existsByQuestionId(id)) {
-            throw new IllegalStateException("Không thể cập nhật câu hỏi đã được chọn vào bài thi.");
-        }
+        // if (examQuestionRepo.existsByQuestionId(id)) {
+        // throw new IllegalStateException("Không thể cập nhật câu hỏi đã được chọn vào
+        // bài thi.");
+        // }
 
         // Check if user is admin or owner
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -200,7 +201,8 @@ public class QuestionServiceImpl implements QuestionService {
 
         // Check if already used in exam -> block update
         if (examQuestionRepo.existsByQuestionId(id)) {
-            throw new IllegalStateException("Không thể cập nhật câu hỏi đã được chọn vào bài thi.");
+            // throw new IllegalStateException("Không thể cập nhật câu hỏi đã được chọn vào
+            // bài thi.");
         }
 
         // Admin can update any question - no ownership check

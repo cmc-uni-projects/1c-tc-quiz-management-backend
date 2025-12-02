@@ -24,4 +24,5 @@ public class ExamResponseDto {
     private TeacherResponseDto teacher;
     private CategoryListDto category;
     private List<ExamQuestionResponseDto> examQuestions;
+    private Integer questionCount;
 }
