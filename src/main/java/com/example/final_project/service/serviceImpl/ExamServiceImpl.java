@@ -37,7 +37,6 @@ public class ExamServiceImpl implements ExamService {
     private final CategoryRepository categoryRepository;
     private final EntityDtoMapper entityDtoMapper;
 
-
     @Override
     @Transactional
     public ExamResponseDto createExam(ExamRequestDto dto, Long userId) {
@@ -47,11 +46,13 @@ public class ExamServiceImpl implements ExamService {
         Teacher teacher = null;
         if (!isAdmin) {
             teacher = teacherRepository.findById(userId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy giáo viên với ID: " + userId));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Không tìm thấy giáo viên với ID: " + userId));
         }
 
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy danh mục với ID: " + dto.getCategoryId()));
 
         Exam exam = Exam.builder()
                 .title(dto.getTitle())
@@ -70,7 +71,8 @@ public class ExamServiceImpl implements ExamService {
         AtomicInteger index = new AtomicInteger(0);
         List<ExamQuestion> examQuestions = dto.getQuestionIds().stream().map(qid -> {
             Question question = questionRepository.findById(qid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
             return ExamQuestion.builder()
                     .exam(finalExam)
                     .question(question)
@@ -105,7 +107,6 @@ public class ExamServiceImpl implements ExamService {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
 
-
         exam.setTitle(dto.getTitle());
         exam.setDescription(dto.getDescription());
         exam.setDurationMinutes(dto.getDurationMinutes());
@@ -113,11 +114,16 @@ public class ExamServiceImpl implements ExamService {
         exam.setEndTime(dto.getEndTime());
         exam.setCategory(category);
 
-        exam.getExamQuestions().clear();
+        if (exam.getExamQuestions() == null) {
+            exam.setExamQuestions(new ArrayList<>());
+        } else {
+            exam.getExamQuestions().clear();
+        }
         AtomicInteger index = new AtomicInteger(0);
         dto.getQuestionIds().forEach(qid -> {
             Question question = questionRepository.findById(qid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Câu hỏi không tồn tại: " + qid));
             ExamQuestion examQuestion = ExamQuestion.builder()
                     .exam(exam)
                     .question(question)
@@ -131,6 +137,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ExamResponseDto> getExamsByTeacher(Long teacherId) {
         return examRepository.findByTeacherIdOrderByCreatedAtDesc(teacherId).stream()
                 .map(entityDtoMapper::toExamResponseDto)
@@ -138,12 +145,14 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ExamResponseDto> getAllExams(Pageable pageable) {
         Page<Exam> examPage = examRepository.findAll(pageable);
         return examPage.map(entityDtoMapper::toExamResponseDto);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ExamResponseDto getExamById(Long examId, Long userId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài thi không tồn tại"));
@@ -179,16 +188,19 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable) {
         Specification<Exam> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (searchRequest.getCategoryId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("category").get("categoryId"), searchRequest.getCategoryId()));
+                predicates.add(
+                        criteriaBuilder.equal(root.get("category").get("categoryId"), searchRequest.getCategoryId()));
             }
 
             if (StringUtils.hasText(searchRequest.getTitle())) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), "%" + searchRequest.getTitle().toLowerCase() + "%"));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")),
+                        "%" + searchRequest.getTitle().toLowerCase() + "%"));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
