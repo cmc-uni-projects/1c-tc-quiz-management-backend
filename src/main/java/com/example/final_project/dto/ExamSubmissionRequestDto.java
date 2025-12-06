@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -11,5 +12,5 @@ import java.util.Map;
 @AllArgsConstructor
 public class ExamSubmissionRequestDto {
     private Long examId;
-    private Map<Long, Long> answers; // Key: questionId, Value: answerId
+    private Map<Long, List<Long>> answers; // Key: questionId, Value: List of answerIds
 }

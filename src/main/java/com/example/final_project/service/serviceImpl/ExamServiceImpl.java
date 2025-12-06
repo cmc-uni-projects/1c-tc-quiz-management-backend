@@ -191,6 +191,14 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(readOnly = true)
+    public ExamResponseDto getExamForStudent(Long examId) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài thi không tồn tại"));
+        return entityDtoMapper.toExamResponseDto(exam);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable) {
         Specification<Exam> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
