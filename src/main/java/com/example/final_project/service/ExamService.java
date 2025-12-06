@@ -10,10 +10,18 @@ import java.util.List;
 
 public interface ExamService {
     ExamResponseDto createExam(ExamRequestDto dto, Long teacherId);
+
     ExamResponseDto updateExam(Long examId, ExamRequestDto dto, Long teacherId);
+
     List<ExamResponseDto> getExamsByTeacher(Long teacherId);
+
     Page<ExamResponseDto> getAllExams(Pageable pageable);
+
     ExamResponseDto getExamById(Long examId, Long teacherId);
+
     void deleteExamById(Long examId, Long teacherId);
+
+    ExamResponseDto getExamForStudent(Long examId);
+
     Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable);
 }

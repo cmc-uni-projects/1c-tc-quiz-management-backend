@@ -26,4 +26,10 @@ public class StudentExamController {
         Page<ExamResponseDto> exams = examService.searchExams(searchRequest, pageable);
         return ResponseEntity.ok(exams);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ExamResponseDto> getExamById(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        ExamResponseDto exam = examService.getExamForStudent(id);
+        return ResponseEntity.ok(exam);
+    }
 }

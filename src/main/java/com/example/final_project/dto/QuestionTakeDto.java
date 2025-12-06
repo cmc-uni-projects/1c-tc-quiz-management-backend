@@ -12,5 +12,6 @@ import java.util.List;
 public class QuestionTakeDto {
     private Long id;
     private String text;
+    private String questionType;
     private List<AnswerOptionDto> answers;
 }
