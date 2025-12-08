@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 public class StudentAnswerDto {
     private Long questionId;
     private Long answerId;
+    @com.fasterxml.jackson.annotation.JsonProperty("isCorrect")
     private boolean isCorrect;
 }
