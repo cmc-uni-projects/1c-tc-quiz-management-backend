@@ -1,6 +1,5 @@
 package com.example.final_project.service.serviceImpl;
 
-
 import com.example.final_project.entity.Exam;
 import com.example.final_project.entity.ExamHistory;
 import com.example.final_project.entity.ExamOnline;
@@ -28,7 +27,6 @@ public class ExamHistoryServiceImpl implements ExamHistoryService {
         return examHistoryRepository.save(examHistory);
     }
 
-
     @Override
     public List<ExamHistory> getHistoriesByStudent(Long studentId) {
         return examHistoryRepository.findByStudentIdOrderBySubmittedAtDesc(studentId);
@@ -55,8 +53,9 @@ public class ExamHistoryServiceImpl implements ExamHistoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ExamHistory getById(Long id) {
-        return examHistoryRepository.findById(id)
+        return examHistoryRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch sử bài thi với ID: " + id));
     }
 
