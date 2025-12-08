@@ -83,7 +83,7 @@ public class QuestionController {
 
     @GetMapping("/difficulties")
     public ResponseEntity<java.util.List<String>> getDifficulties() {
-        return ResponseEntity.ok(java.util.Arrays.asList("Easy", "Medium", "Hard"));
+        return ResponseEntity.ok(java.util.Arrays.asList("EASY", "MEDIUM", "HARD"));
     }
 
     @GetMapping("/search")
