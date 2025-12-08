@@ -1,13 +1,7 @@
 package com.example.final_project.service.serviceImpl;
 
-import com.example.final_project.entity.Exam;
 import com.example.final_project.entity.ExamHistory;
-import com.example.final_project.entity.ExamOnline;
-import com.example.final_project.entity.Student;
 import com.example.final_project.repository.ExamHistoryRepository;
-import com.example.final_project.repository.ExamOnlineRepository;
-import com.example.final_project.repository.ExamRepository;
-import com.example.final_project.repository.StudentRepository;
 import com.example.final_project.service.ExamHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
