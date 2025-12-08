@@ -128,15 +128,31 @@ public class EntityDtoMapper {
         if (examHistory == null) {
             return null;
         }
+
+        List<StudentAnswerDto> answerDtos = null;
+        if (examHistory.getDetails() != null) {
+            answerDtos = examHistory.getDetails().stream()
+                    .map(detail -> new StudentAnswerDto(detail.getQuestionId(), detail.getAnswerId(),
+                            detail.isCorrect()))
+                    .collect(Collectors.toList());
+        }
+
         return ExamResultResponseDto.builder()
                 .examHistoryId(examHistory.getId())
-                .examId(examHistory.getExam().getExamId())
+                .examId(examHistory.getExam() != null ? examHistory.getExam().getExamId() : null)
                 .examTitle(examHistory.getExamTitle())
                 .score(examHistory.getScore())
                 .correctCount(examHistory.getCorrectCount())
                 .wrongCount(examHistory.getWrongCount())
                 .totalQuestions(examHistory.getTotalQuestions())
                 .submittedAt(examHistory.getSubmittedAt())
+                .studentAnswers(answerDtos)
+                .studentName(examHistory.getDisplayName())
+                .studentEmail(examHistory.getStudent() != null ? examHistory.getStudent().getEmail() : null)
+                .attemptNumber(examHistory.getAttemptNumber())
+                .categoryName(examHistory.getExam() != null && examHistory.getExam().getCategory() != null
+                        ? examHistory.getExam().getCategory().getName()
+                        : "N/A")
                 .build();
     }
 

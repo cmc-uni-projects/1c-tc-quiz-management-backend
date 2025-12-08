@@ -20,4 +20,9 @@ public class ExamResultResponseDto {
     private Integer wrongCount;
     private Integer totalQuestions;
     private LocalDateTime submittedAt;
+    private java.util.List<StudentAnswerDto> studentAnswers;
+    private String studentName;
+    private String studentEmail;
+    private Integer attemptNumber;
+    private String categoryName;
 }

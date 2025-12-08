@@ -23,17 +23,22 @@ public interface ExamHistoryRepository extends JpaRepository<ExamHistory, Long> 
 
     // Danh sách bài thi theo số lượng người thi nhiều nhất (yêu cầu 53)
     @Query("""
-        SELECT eh.exam.examId, eh.examTitle, COUNT(eh)
-        FROM ExamHistory eh
-        GROUP BY eh.exam.examId, eh.examTitle
-        ORDER BY COUNT(eh) DESC
-    """)
+                SELECT eh.exam.examId, eh.examTitle, COUNT(eh)
+                FROM ExamHistory eh
+                GROUP BY eh.exam.examId, eh.examTitle
+                ORDER BY COUNT(eh) DESC
+            """)
     List<Object[]> getExamRanking();
 
     // Methods for ExamOnline
     List<ExamHistory> findByExamOnline_IdOrderByScoreDesc(Long examOnlineId);
+
     boolean existsByExamOnlineId(Long examOnlineId);
 
     Integer countByStudentStudentIdAndExamExamId(Long studentId, Long examId);
+
     Integer countByStudentStudentIdAndExamOnlineId(Long studentId, Long examOnlineId);
+
+    @Query("SELECT h FROM ExamHistory h LEFT JOIN FETCH h.details WHERE h.id = :id")
+    java.util.Optional<ExamHistory> findByIdWithDetails(@org.springframework.data.repository.query.Param("id") Long id);
 }

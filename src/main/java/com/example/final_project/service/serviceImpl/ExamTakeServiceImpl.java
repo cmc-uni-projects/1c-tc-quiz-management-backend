@@ -120,6 +120,24 @@ public class ExamTakeServiceImpl implements ExamTakeService {
                 examHistory.setSubmittedAt(LocalDateTime.now());
                 examHistory.setAttemptNumber(attemptNumber);
 
+                List<ExamHistoryDetail> details = new java.util.ArrayList<>();
+                for (Question question : questions) {
+                        Long questionId = question.getId();
+                        List<Long> studentSelectedIds = submittedAnswers.getOrDefault(questionId, List.of());
+                        List<Long> correctIds = correctAnswersMap.getOrDefault(questionId, List.of());
+
+                        for (Long selectedId : studentSelectedIds) {
+                                boolean isAnswerCorrect = correctIds.contains(selectedId);
+                                ExamHistoryDetail detail = new ExamHistoryDetail();
+                                detail.setExamHistory(examHistory);
+                                detail.setQuestionId(questionId);
+                                detail.setAnswerId(selectedId);
+                                detail.setCorrect(isAnswerCorrect);
+                                details.add(detail);
+                        }
+                }
+                examHistory.setDetails(details);
+
                 ExamHistory savedHistory = examHistoryRepository.save(examHistory);
 
                 return entityDtoMapper.toExamResultResponseDto(savedHistory);

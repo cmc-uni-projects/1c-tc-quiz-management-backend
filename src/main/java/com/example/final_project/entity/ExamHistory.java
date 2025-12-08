@@ -63,6 +63,9 @@ public class ExamHistory {
     @Column(name = "attempt_number", nullable = false)
     private Integer attemptNumber;
 
+    @OneToMany(mappedBy = "examHistory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ExamHistoryDetail> details;
+
     @PrePersist
     public void prePersist() {
         if (this.submittedAt == null) {
