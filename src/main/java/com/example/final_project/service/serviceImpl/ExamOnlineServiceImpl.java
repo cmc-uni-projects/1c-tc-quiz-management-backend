@@ -256,7 +256,7 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         WaitingRoomUserDto userDto = new WaitingRoomUserDto(student.getStudentId(), student.getUsername(), student.getAvatar());
         waitingRoomService.addUser(accessCode, userDto);
 
-        broadcastNewParticipant(accessCode, userDto.getDisplayName());
+        broadcastParticipantUpdate(accessCode, userDto.getDisplayName() + " has joined the waiting room.");
 
         List<WaitingRoomUserDto> updatedParticipants = waitingRoomService.getParticipants(accessCode);
         return new ExamOnlineJoinResponse(
@@ -288,7 +288,7 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
         // Check if student is in the waiting room (i.e., has joined)
         boolean hasJoined = waitingRoomService.getParticipants(accessCode).stream()
-                .anyMatch(user -> user.getId().equals(studentId));
+                .anyMatch(user -> user.getUserId().equals(studentId));
         if (!hasJoined) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You have not joined this exam.");
         }
@@ -314,13 +314,13 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
 
     private QuestionTakeDto mapQuestionToTakeDto(Question question) {
         List<AnswerOptionDto> options = question.getAnswers().stream()
-                .map(answer -> new AnswerOptionDto(answer.getAnswerId(), answer.getText()))
+                .map(answer -> new AnswerOptionDto(answer.getId(), answer.getText()))
                 .collect(Collectors.toList());
 
         return new QuestionTakeDto(
-                question.getQuestionId(),
-                question.getContent(),
-                question.getQuestionType(),
+                question.getId(),
+                question.getTitle(),
+                QuestionType.valueOf(question.getType().name()),
                 options
         );
     }
@@ -355,17 +355,18 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         for (Question question : examOnline.getQuestions()) {
             List<Long> correctOptionIds = question.getAnswers().stream()
                     .filter(Answer::isCorrect)
-                    .map(Answer::getAnswerId)
+                    .map(Answer::getId)
                     .collect(Collectors.toList());
 
-            List<Long> submittedOptionIds = submittedAnswersMap.getOrDefault(question.getQuestionId(), Collections.emptyList());
+            List<Long> submittedOptionIds = submittedAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
             if (new HashSet<>(correctOptionIds).equals(new HashSet<>(submittedOptionIds))) {
                 correctCount++;
             }
         }
 
-        double score = (double) correctCount / totalQuestions * 100;
+        int wrongCount = totalQuestions - correctCount;
+        double score = (double) correctCount / totalQuestions * 10;
         boolean passed = score >= examOnline.getPassingScore();
 
         // Find attempt number
@@ -375,10 +376,13 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         ExamHistory history = ExamHistory.builder()
                 .student(student)
                 .examOnline(examOnline)
+                .examTitle(examOnline.getName())
+                .difficulty(examOnline.getLevel().name())
                 .score(score)
                 .passed(passed)
-                .submissionTime(java.time.LocalDateTime.now())
+                .submittedAt(java.time.LocalDateTime.now())
                 .correctCount(correctCount)
+                .wrongCount(wrongCount)
                 .totalQuestions(totalQuestions)
                 .attemptNumber(attemptNumber)
                 .displayName(student.getUsername()) // or some other display name logic
@@ -389,11 +393,20 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
         // Remove user from waiting room after submission
         waitingRoomService.removeUser(examOnline.getAccessCode(), studentId);
 
-        return new ExamResultResponseDto(history.getId(), examOnline.getId(), score, correctCount, totalQuestions, passed);
+        broadcastParticipantUpdate(examOnline.getAccessCode(), student.getUsername() + " has left the room.");
+
+        return ExamResultResponseDto.builder()
+                .examHistoryId(history.getId())
+                .examId(examOnline.getId())
+                .score(score)
+                .correctCount(correctCount)
+                .totalQuestions(totalQuestions)
+                .passed(passed)
+                .build();
     }
 
 
-    private void broadcastNewParticipant(String accessCode, String displayName) {
+    private void broadcastParticipantUpdate(String accessCode, String message) {
         ExamOnline examOnline = findByAccessCode(accessCode);
         List<WaitingRoomUserDto> participants = waitingRoomService.getParticipants(accessCode);
         int participantCount = participants != null ? participants.size() : 0;
@@ -402,7 +415,7 @@ public class ExamOnlineServiceImpl implements ExamOnlineService {
                 examOnline.getName(),
                 participantCount,
                 participants,
-                "Student " + displayName + " has joined the waiting room."
+                message
         );
 
         messagingTemplate.convertAndSend("/topic/waiting-room/" + accessCode, notification);

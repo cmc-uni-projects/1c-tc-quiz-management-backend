@@ -39,6 +39,8 @@ public interface ExamHistoryRepository extends JpaRepository<ExamHistory, Long> 
 
     Integer countByStudentStudentIdAndExamOnlineId(Long studentId, Long examOnlineId);
 
+    Integer countByExamOnlineIdAndStudentStudentId(Long examOnlineId, Long studentId);
+
     boolean existsByExamOnlineIdAndStudentStudentId(Long examOnlineId, Long studentId);
 
     @Query("SELECT h FROM ExamHistory h LEFT JOIN FETCH h.details WHERE h.id = :id")
