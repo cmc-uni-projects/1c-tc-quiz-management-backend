@@ -10,9 +10,10 @@ import java.util.List;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
        Page<Question> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-       Page<Question> findByCreatedByOrderByCreatedAtDesc(String createdBy, Pageable pageable);
+       @Query("SELECT q FROM Question q WHERE q.createdBy = :createdBy AND q.visibility != 'HIDDEN' ORDER BY q.createdAt DESC")
+       Page<Question> findByCreatedByOrderByCreatedAtDesc(@Param("createdBy") String createdBy, Pageable pageable);
 
-       @Query("SELECT q FROM Question q WHERE q.visibility = 'PUBLIC' OR q.createdBy = :username ORDER BY q.createdAt DESC")
+       @Query("SELECT q FROM Question q WHERE (q.visibility = 'PUBLIC' OR q.createdBy = :username) AND q.visibility != 'HIDDEN' ORDER BY q.createdAt DESC")
        Page<Question> findAllPublicOrCreator(@Param("username") String username, Pageable pageable);
 
        List<Question> findByDifficulty(String difficulty);
@@ -25,7 +26,8 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
                      "(:categoryId IS NULL OR q.category.id = :categoryId) AND " +
                      "(:createdBy IS NULL OR q.createdBy = :createdBy) AND " +
                      "(:visibility IS NULL OR q.visibility = :visibility) AND " +
-                     "(:isAdmin = true OR q.visibility = 'PUBLIC' OR q.createdBy = :currentUsername)")
+                     "((:isAdmin = true) OR (q.visibility = 'PUBLIC') OR (q.createdBy = :currentUsername)) AND " +
+                     "q.visibility != 'HIDDEN'")
        Page<Question> searchQuestions(@Param("keyword") String keyword,
                      @Param("difficulty") String difficulty,
                      @Param("type") com.example.final_project.entity.QuestionType type,
