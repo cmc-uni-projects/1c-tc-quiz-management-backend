@@ -86,7 +86,8 @@ public class QuestionServiceImpl implements QuestionService {
         Question question = questionRepo.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
 
-        if (question.getVisibility() == QuestionVisibility.PRIVATE) {
+        if (question.getVisibility() == QuestionVisibility.PRIVATE
+                || question.getVisibility() == QuestionVisibility.HIDDEN) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String currentUsername = authentication.getName();
             if (!question.getCreatedBy().equals(currentUsername)) {
