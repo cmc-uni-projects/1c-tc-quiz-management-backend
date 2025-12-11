@@ -30,9 +30,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionResponseDto createQuestion(QuestionCreateDto dto) {
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -46,19 +44,23 @@ public class QuestionServiceImpl implements QuestionService {
         q.setCreatedBy(dto.getCreatedBy());
 
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
-            List<Answer> answers = new ArrayList<>();
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
-            trueAnswer.setQuestion(q);
-            answers.add(trueAnswer);
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
 
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
-            falseAnswer.setQuestion(q);
-            answers.add(falseAnswer);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
+
+            List<Answer> answers = new ArrayList<>();
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                answers.add(answer);
+            }
             q.setAnswers(answers);
         } else {
             List<Answer> answers = dto.getAnswers().stream().map(aDto -> {
@@ -134,9 +136,7 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -152,18 +152,23 @@ public class QuestionServiceImpl implements QuestionService {
         // Replace answers
         q.getAnswers().clear();
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
-            trueAnswer.setQuestion(q);
-            q.getAnswers().add(trueAnswer);
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
 
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
-            falseAnswer.setQuestion(q);
-            q.getAnswers().add(falseAnswer);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
+
+            // q.getAnswers().clear() was called before this if block, so directly add to it
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                q.getAnswers().add(answer);
+            }
         } else {
             List<Answer> newAnswers = dto.getAnswers().stream().map(aDto -> {
                 Answer a = new Answer();
@@ -212,9 +217,7 @@ public class QuestionServiceImpl implements QuestionService {
         Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
 
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -230,18 +233,23 @@ public class QuestionServiceImpl implements QuestionService {
         // Replace answers
         q.getAnswers().clear();
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
-            trueAnswer.setQuestion(q);
-            q.getAnswers().add(trueAnswer);
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
 
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
-            falseAnswer.setQuestion(q);
-            q.getAnswers().add(falseAnswer);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
+
+            // q.getAnswers().clear() was called before this if block, so directly add to it
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                q.getAnswers().add(answer);
+            }
         } else {
             List<Answer> newAnswers = dto.getAnswers().stream().map(aDto -> {
                 Answer a = new Answer();
@@ -324,6 +332,21 @@ public class QuestionServiceImpl implements QuestionService {
             case MULTIPLE:
                 if (correctCount < 2)
                     throw new IllegalArgumentException("Loại MULTIPLE phải có ít nhất 2 đáp án đúng.");
+                break;
+            case TRUE_FALSE:
+                if (correctCount != 1) {
+                    throw new IllegalArgumentException("Loại TRUE_FALSE phải có đúng 1 đáp án đúng.");
+                }
+                String correctText = answers.stream()
+                        .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                        .map(AnswerDto::getText)
+                        .findFirst()
+                        .orElse(""); // Should not be empty if correctCount is 1
+
+                if (!"True".equalsIgnoreCase(correctText) && !"False".equalsIgnoreCase(correctText)
+                        && !"Đúng".equalsIgnoreCase(correctText) && !"Sai".equalsIgnoreCase(correctText)) {
+                    throw new IllegalArgumentException("Đáp án đúng cho TRUE_FALSE phải là 'True', 'False', 'Đúng' hoặc 'Sai'.");
+                }
                 break;
         }
     }
