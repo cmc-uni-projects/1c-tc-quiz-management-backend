@@ -46,17 +46,23 @@ public class QuestionServiceImpl implements QuestionService {
         q.setCreatedBy(dto.getCreatedBy());
 
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
+
+            q.setCorrectAnswer(correctAnswerText);
             List<Answer> answers = new ArrayList<>();
             Answer trueAnswer = new Answer();
             trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
+            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
             trueAnswer.setQuestion(q);
             answers.add(trueAnswer);
 
             Answer falseAnswer = new Answer();
             falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
+            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
             falseAnswer.setQuestion(q);
             answers.add(falseAnswer);
             q.setAnswers(answers);
@@ -152,16 +158,23 @@ public class QuestionServiceImpl implements QuestionService {
         // Replace answers
         q.getAnswers().clear();
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
+
+            q.setCorrectAnswer(correctAnswerText);
+
             Answer trueAnswer = new Answer();
             trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
+            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
             trueAnswer.setQuestion(q);
             q.getAnswers().add(trueAnswer);
 
             Answer falseAnswer = new Answer();
             falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
+            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
             falseAnswer.setQuestion(q);
             q.getAnswers().add(falseAnswer);
         } else {
@@ -230,16 +243,23 @@ public class QuestionServiceImpl implements QuestionService {
         // Replace answers
         q.getAnswers().clear();
         if (type == QuestionType.TRUE_FALSE) {
-            q.setCorrectAnswer(dto.getCorrectAnswer());
+            String correctAnswerText = dto.getAnswers().stream()
+                    .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                    .map(AnswerDto::getText)
+                    .findFirst()
+                    .orElse(null);
+
+            q.setCorrectAnswer(correctAnswerText);
+
             Answer trueAnswer = new Answer();
             trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(dto.getCorrectAnswer()));
+            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
             trueAnswer.setQuestion(q);
             q.getAnswers().add(trueAnswer);
 
             Answer falseAnswer = new Answer();
             falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(dto.getCorrectAnswer()));
+            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
             falseAnswer.setQuestion(q);
             q.getAnswers().add(falseAnswer);
         } else {
