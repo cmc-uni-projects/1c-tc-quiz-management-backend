@@ -30,9 +30,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionResponseDto createQuestion(QuestionCreateDto dto) {
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -140,9 +138,7 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -225,9 +221,7 @@ public class QuestionServiceImpl implements QuestionService {
         Question q = questionRepo.findById(id).orElseThrow(() -> new NoSuchElementException("Câu hỏi không tồn tại"));
 
         QuestionType type = QuestionType.valueOf(dto.getType());
-        if (type != QuestionType.TRUE_FALSE) {
-            validateAnswersByType(type, dto.getAnswers());
-        }
+        validateAnswersByType(type, dto.getAnswers());
 
         Category category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new NoSuchElementException("Danh mục không tồn tại"));
@@ -344,6 +338,20 @@ public class QuestionServiceImpl implements QuestionService {
             case MULTIPLE:
                 if (correctCount < 2)
                     throw new IllegalArgumentException("Loại MULTIPLE phải có ít nhất 2 đáp án đúng.");
+                break;
+            case TRUE_FALSE:
+                if (correctCount != 1) {
+                    throw new IllegalArgumentException("Loại TRUE_FALSE phải có đúng 1 đáp án đúng.");
+                }
+                String correctText = answers.stream()
+                        .filter(a -> Boolean.TRUE.equals(a.getCorrect()))
+                        .map(AnswerDto::getText)
+                        .findFirst()
+                        .orElse(""); // Should not be empty if correctCount is 1
+
+                if (!"True".equalsIgnoreCase(correctText) && !"False".equalsIgnoreCase(correctText)) {
+                    throw new IllegalArgumentException("Đáp án đúng cho TRUE_FALSE phải là 'True' hoặc 'False'.");
+                }
                 break;
         }
     }
