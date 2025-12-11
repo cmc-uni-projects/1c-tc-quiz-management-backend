@@ -50,19 +50,17 @@ public class QuestionServiceImpl implements QuestionService {
                     .findFirst()
                     .orElse(null);
 
-            q.setCorrectAnswer(correctAnswerText);
-            List<Answer> answers = new ArrayList<>();
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
-            trueAnswer.setQuestion(q);
-            answers.add(trueAnswer);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
 
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
-            falseAnswer.setQuestion(q);
-            answers.add(falseAnswer);
+            List<Answer> answers = new ArrayList<>();
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                answers.add(answer);
+            }
             q.setAnswers(answers);
         } else {
             List<Answer> answers = dto.getAnswers().stream().map(aDto -> {
@@ -160,19 +158,17 @@ public class QuestionServiceImpl implements QuestionService {
                     .findFirst()
                     .orElse(null);
 
-            q.setCorrectAnswer(correctAnswerText);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
 
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
-            trueAnswer.setQuestion(q);
-            q.getAnswers().add(trueAnswer);
-
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
-            falseAnswer.setQuestion(q);
-            q.getAnswers().add(falseAnswer);
+            // q.getAnswers().clear() was called before this if block, so directly add to it
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                q.getAnswers().add(answer);
+            }
         } else {
             List<Answer> newAnswers = dto.getAnswers().stream().map(aDto -> {
                 Answer a = new Answer();
@@ -243,19 +239,17 @@ public class QuestionServiceImpl implements QuestionService {
                     .findFirst()
                     .orElse(null);
 
-            q.setCorrectAnswer(correctAnswerText);
+            q.setCorrectAnswer(correctAnswerText); // e.g., "Đúng"
 
-            Answer trueAnswer = new Answer();
-            trueAnswer.setText("True");
-            trueAnswer.setCorrect("True".equalsIgnoreCase(correctAnswerText));
-            trueAnswer.setQuestion(q);
-            q.getAnswers().add(trueAnswer);
-
-            Answer falseAnswer = new Answer();
-            falseAnswer.setText("False");
-            falseAnswer.setCorrect("False".equalsIgnoreCase(correctAnswerText));
-            falseAnswer.setQuestion(q);
-            q.getAnswers().add(falseAnswer);
+            // q.getAnswers().clear() was called before this if block, so directly add to it
+            for (AnswerDto answerDto : dto.getAnswers()) { // Iterate through the DTO's answers
+                Answer answer = new Answer();
+                answer.setText(answerDto.getText()); // Use the text from DTO, e.g., "Đúng" or "Sai"
+                // Set correct based on whether its text matches the correctAnswerText
+                answer.setCorrect(answerDto.getText().equalsIgnoreCase(correctAnswerText));
+                answer.setQuestion(q);
+                q.getAnswers().add(answer);
+            }
         } else {
             List<Answer> newAnswers = dto.getAnswers().stream().map(aDto -> {
                 Answer a = new Answer();
@@ -349,8 +343,9 @@ public class QuestionServiceImpl implements QuestionService {
                         .findFirst()
                         .orElse(""); // Should not be empty if correctCount is 1
 
-                if (!"True".equalsIgnoreCase(correctText) && !"False".equalsIgnoreCase(correctText)) {
-                    throw new IllegalArgumentException("Đáp án đúng cho TRUE_FALSE phải là 'True' hoặc 'False'.");
+                if (!"True".equalsIgnoreCase(correctText) && !"False".equalsIgnoreCase(correctText)
+                        && !"Đúng".equalsIgnoreCase(correctText) && !"Sai".equalsIgnoreCase(correctText)) {
+                    throw new IllegalArgumentException("Đáp án đúng cho TRUE_FALSE phải là 'True', 'False', 'Đúng' hoặc 'Sai'.");
                 }
                 break;
         }
