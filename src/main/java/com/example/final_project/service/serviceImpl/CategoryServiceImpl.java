@@ -46,6 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
                 category.getDescription(),
                 resolveRole(category.getCreatedBy()),
                 resolveName(category.getCreatedBy()),
+                category.getCreatedBy(), // Add createdBy field
                 category.getQuestions() != null ? category.getQuestions().size() : 0);
     }
 
