@@ -24,4 +24,6 @@ public interface ExamService {
     ExamResponseDto getExamForStudent(Long examId);
 
     Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable);
+
+    ExamResponseDto addAllowedStudents(Long examId, com.example.final_project.dto.AllowedStudentsRequest request, Long teacherId);
 }
