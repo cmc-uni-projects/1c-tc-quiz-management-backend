@@ -118,6 +118,7 @@ public class EntityDtoMapper {
                 .status(exam != null && exam.getStatus() != null ? exam.getStatus().name() : null)
                 .code(exam.getCode())
                 .url(exam.getUrl())
+                .isPrivate(exam.getStatus() == ExamStatus.PRIVATE)
                 .build();
     }
 
