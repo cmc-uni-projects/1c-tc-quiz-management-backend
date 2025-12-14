@@ -225,7 +225,7 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable) {
+    public Page<ExamResponseDto> searchExams(ExamSearchRequest searchRequest, Pageable pageable, Long studentId, boolean includeAuthorizedPrivate) {
         Specification<Exam> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -248,15 +248,74 @@ public class ExamServiceImpl implements ExamService {
                         .add(criteriaBuilder.equal(root.get("teacher").get("teacherId"), searchRequest.getTeacherId()));
             }
 
-            if (searchRequest.getStatus() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), searchRequest.getStatus()));
+            if (studentId != null) { // Logic for student view
+                if (includeAuthorizedPrivate) {
+                    predicates.add(criteriaBuilder.or(
+                            // PUBLISHED exams
+                            criteriaBuilder.equal(root.get("status"), ExamStatus.PUBLISHED),
+                            // PRIVATE exams where student is authorized
+                            criteriaBuilder.and(
+                                    criteriaBuilder.equal(root.get("status"), ExamStatus.PRIVATE),
+                                    criteriaBuilder.isMember(studentRepository.getReferenceById(studentId), root.get("allowedStudents"))
+                            )
+                    ));
+                } else {
+                    // Only PUBLISHED exams if not including authorized private
+                    predicates.add(criteriaBuilder.equal(root.get("status"), ExamStatus.PUBLISHED));
+                }
+            } else { // Logic for Admin/Teacher view or general search
+                if (searchRequest.getStatus() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), searchRequest.getStatus()));
+                } else {
+                    // Default for general search (e.g., show all PUBLISHED for non-admin/teacher if status not specified)
+                    // Or let other predicates handle it if no status filter
+                }
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        return examRepository.findAll(spec, pageable).map(entityDtoMapper::toExamResponseDto);
-    }
+                                            return examRepository.findAll(spec, pageable).map(exam -> {
+
+                                            ExamResponseDto dto = entityDtoMapper.toExamResponseDto(exam);
+
+                                            // Set isAuthorized flag based on student context if available
+
+                                            if (studentId != null) {
+
+                                                if (exam.getStatus() == ExamStatus.PRIVATE) {
+
+                                                    // Explicitly initialize the collection to ensure it's loaded within the transaction
+
+                                                    // Accessing .size() or .isEmpty() is a common way to trigger lazy loading
+
+                                                    if (exam.getAllowedStudents() != null) {
+
+                                                         exam.getAllowedStudents().size(); // Trigger lazy loading
+
+                                                    }
+
+                                
+
+                                                    dto.setAuthorized(exam.getAllowedStudents() != null &&
+
+                                                            exam.getAllowedStudents().stream().anyMatch(s -> s.getStudentId().equals(studentId)));
+
+                                                } else {
+
+                                                    dto.setAuthorized(true); // Public exams are always authorized for students
+
+                                                }
+
+                                            } else {
+
+                                                dto.setAuthorized(true); // Default to true if no student context (e.g., admin/teacher view)
+
+                                            }
+
+                                            return dto;
+
+                                        });    }
 
     @Override
     @Transactional
