@@ -30,9 +30,9 @@ public class StudentExamController {
     private final ExamService examService;
 
     @GetMapping("/search")
-    public ResponseEntity<Page<ExamResponseDto>> searchExams(ExamSearchRequest searchRequest, Pageable pageable) {
-        searchRequest.setStatus(com.example.final_project.entity.ExamStatus.PUBLISHED);
-        Page<ExamResponseDto> exams = examService.searchExams(searchRequest, pageable);
+    public ResponseEntity<Page<ExamResponseDto>> searchExams(ExamSearchRequest searchRequest, Pageable pageable, Principal principal) {
+        Long studentId = ((CustomUserDetails) ((Authentication) principal).getPrincipal()).getId();
+        Page<ExamResponseDto> exams = examService.searchExams(searchRequest, pageable, studentId, searchRequest.isIncludeAuthorizedPrivate());
         return ResponseEntity.ok(exams);
     }
 
