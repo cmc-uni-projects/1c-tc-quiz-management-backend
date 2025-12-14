@@ -128,7 +128,7 @@ public class ExamController {
 
         Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
                 org.springframework.data.domain.Sort.by("createdAt").descending());
-        return ResponseEntity.ok(examService.searchExams(searchRequest, pageable));
+        return ResponseEntity.ok(examService.searchExams(searchRequest, pageable, null, false));
     }
 
     @GetMapping("/{examId}/add-students")
