@@ -155,6 +155,7 @@ public class EntityDtoMapper {
         return ExamResultResponseDto.builder()
                 .examHistoryId(examHistory.getId())
                 .examId(examHistory.getExam() != null ? examHistory.getExam().getExamId() : null)
+                .examOnlineId(examHistory.getExamOnline() != null ? examHistory.getExamOnline().getId() : null)
                 .examTitle(examHistory.getExamTitle())
                 .score(examHistory.getScore())
                 .correctCount(examHistory.getCorrectCount())
@@ -183,6 +184,10 @@ public class EntityDtoMapper {
             dto.setExamId(examHistory.getExam().getExamId());
         }
 
+        if (examHistory.getExamOnline() != null) {
+            dto.setExamOnlineId(examHistory.getExamOnline().getId());
+        }
+
         dto.setExamTitle(examHistory.getExamTitle());
         dto.setTotalQuestions(examHistory.getTotalQuestions());
         dto.setDifficulty(examHistory.getDifficulty());
@@ -197,6 +202,8 @@ public class EntityDtoMapper {
         dto.setWrongCount(examHistory.getWrongCount());
         dto.setSubmittedAt(examHistory.getSubmittedAt());
         dto.setAttemptNumber(examHistory.getAttemptNumber());
+        dto.setTimeSpent(examHistory.getTimeSpent());
+        dto.setPassed(examHistory.getPassed());
 
         return dto;
     }

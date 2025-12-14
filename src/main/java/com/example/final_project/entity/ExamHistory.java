@@ -56,6 +56,7 @@ public class ExamHistory {
     @Column(name = "correct_count", nullable = false)
     private Integer correctCount;
 
+    @Builder.Default
     @Column(name = "wrong_count", nullable = false)
     private Integer wrongCount = 0;
 
@@ -64,6 +65,9 @@ public class ExamHistory {
 
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
+
+    @Column(name = "time_spent") // Time in seconds
+    private Long timeSpent;
 
     @Column(name = "attempt_number", nullable = false)
     private Integer attemptNumber;
