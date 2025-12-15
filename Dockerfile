@@ -18,6 +18,5 @@ ENV TZ=Asia/Ho_Chi_Minh
 # Copy jar
 COPY --from=build /app/target/*.jar app.jar
 # Railway sẽ cung cấp PORT; Spring đọc từ env
-ENV PORT=8080
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app/app.jar"]
