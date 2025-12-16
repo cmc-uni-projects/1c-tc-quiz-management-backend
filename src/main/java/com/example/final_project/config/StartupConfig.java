@@ -18,7 +18,7 @@ public class StartupConfig {
     @Resource
     FileStorageService storageService;
 
-    @Value("${app.admin.seed.enabled:false}")
+    @Value("${app.admin.seed.enabled:true}")
     private boolean seedEnabled;
 
     @Value("${app.admin.username:admin}")
@@ -65,7 +65,7 @@ public class StartupConfig {
 
         Admin admin = new Admin();
         admin.setUsername(adminUsername);
-        admin.setEmail(adminEmail != null ? adminEmail : (adminUsername + "@example.com"));
+        admin.setEmail(adminEmail != null && !adminEmail.isBlank() ? adminEmail : (adminUsername + "@gmail.com"));
         admin.setPassword(encoder.encode(adminPassword));
         admin.setRoleName(RoleName.ADMIN); 
 
