@@ -126,6 +126,13 @@ public class ExamOnlineController {
         return ResponseEntity.ok(exams);
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ExamOnlineResponse>> getAllOnlineExams() {
+        List<ExamOnlineResponse> exams = examOnlineService.getAllOnlineExams();
+        return ResponseEntity.ok(exams);
+    }
+
     @GetMapping("/get/{id}")
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<ExamOnlineResponse> getExamOnlineById(@PathVariable Long id, Principal principal) {
