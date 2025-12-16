@@ -88,7 +88,8 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
                 configuration.setAllowedOrigins(
                                 Arrays.asList("http://localhost:3000", "http://localhost:3001",
-                                                "http://localhost:5173"));
+                                                "http://localhost:5173", "https://finalproject-production-8494.up.railway.app"
+                                ));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With",
                                 "accept",
