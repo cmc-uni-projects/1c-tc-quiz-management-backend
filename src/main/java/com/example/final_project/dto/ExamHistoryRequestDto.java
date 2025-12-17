@@ -11,4 +11,5 @@ public class ExamHistoryRequestDto {
     private Double score;
     private Integer correctCount;
     private Integer wrongCount;
+    private Long timeSpent;
 }
