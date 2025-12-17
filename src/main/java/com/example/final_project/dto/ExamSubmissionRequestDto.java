@@ -13,4 +13,5 @@ import java.util.Map;
 public class ExamSubmissionRequestDto {
     private Long examId;
     private Map<Long, List<Long>> answers; // Key: questionId, Value: List of answerIds
+    private Long timeSpent;
 }
