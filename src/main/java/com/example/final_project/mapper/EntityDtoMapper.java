@@ -80,7 +80,6 @@ public class EntityDtoMapper {
                 student.getAvatar());
     }
 
-
     public ExamQuestionResponseDto toExamQuestionResponseDto(ExamQuestion examQuestion) {
         if (examQuestion == null) {
             return null;
@@ -169,6 +168,7 @@ public class EntityDtoMapper {
                 .categoryName(examHistory.getExam() != null && examHistory.getExam().getCategory() != null
                         ? examHistory.getExam().getCategory().getName()
                         : "N/A")
+                .timeSpent(examHistory.getTimeSpent())
                 .build();
     }
 
