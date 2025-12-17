@@ -26,5 +26,6 @@ public class ExamResultResponseDto {
     private String studentEmail;
     private Integer attemptNumber;
     private String categoryName;
+    private Long timeSpent;
     private boolean passed;
 }
